@@ -306,6 +306,221 @@ open http://localhost:3001          # Grafana dashboards
 - **PostgreSQL (Provider Registration)**: 5432 (internal only)
 - **Redis (Shift Cache)**: 6379 (internal only)
 
+## CI/CD Pipeline (`.github/` Directory)
+
+The repository includes comprehensive GitHub Actions workflows for continuous integration, security scanning, and deployment automation.
+
+### Workflow Files Overview
+
+#### 1. **Test Suite** (`.github/workflows/test.yml`)
+**Triggers:** Push/PR to main/develop branches
+
+**Jobs:**
+- **weight-service**: Python 3.11, MySQL 8.0, uv package manager
+  - Type checking (mypy)
+  - Linting (ruff)
+  - Tests with >95% coverage requirement
+  - Uploads coverage to Codecov
+
+- **billing-service**: Python 3.11, MySQL 8.0, uv package manager
+  - Type checking (mypy)
+  - Linting (flake8)
+  - Code formatting check (black)
+  - Import sorting check (isort)
+  - Tests with >90% coverage requirement
+  - Uploads coverage to Codecov
+
+- **shift-service**: Python 3.11, MySQL 8.0 + Redis 7, uv package manager
+  - Type checking (mypy)
+  - Linting (ruff)
+  - Tests with >90% coverage requirement
+  - Uploads coverage to Codecov
+
+- **frontend**: Node.js 18, npm
+  - Type checking (TypeScript)
+  - Linting (ESLint)
+  - Tests with coverage (Vitest)
+  - Uploads coverage to Codecov
+
+- **integration-tests**: Full Docker Compose stack
+  - Starts all services with Docker Compose
+  - Waits for health checks
+  - Runs end-to-end integration tests
+  - Shows service logs on failure
+
+- **quality-gate**: Final check that all tests passed
+
+#### 2. **Security Scanning** (`.github/workflows/security-scan.yml`)
+**Triggers:** Push/PR, Daily at 2 AM UTC, Manual dispatch
+
+**Jobs:**
+- **trivy-docker-scan**: Scans Docker images for vulnerabilities
+  - Matrix build for all 5 services
+  - Scans for CRITICAL and HIGH severity issues
+  - Uploads SARIF reports to GitHub Security tab
+  - Generates summary in job output
+
+- **trivy-filesystem-scan**: Scans source code for vulnerabilities
+  - Full repository scan
+  - Uploads results to GitHub Security tab
+
+- **python-dependency-scan**: Scans Python dependencies
+  - Uses pip-audit and Safety tools
+  - Matrix scan for all 4 Python services
+  - Generates markdown reports
+  - Uploads artifacts
+
+- **trufflehog-secrets-scan**: Scans for leaked secrets
+  - Full git history scan
+  - Only reports verified secrets
+  - Integrates with TruffleHog
+
+- **gitguardian-scan**: Alternative secrets scanner
+  - Requires GITGUARDIAN_API_KEY secret
+  - Scans git history for exposed credentials
+
+- **config-security-scan**: Checks configuration files
+  - Scans docker-compose.yml for security issues
+  - Checks for privileged containers
+  - Checks for host network mode
+  - Detects hardcoded secrets
+  - Validates security_opt settings
+
+- **security-summary**: Aggregates all scan results
+
+**SARIF Integration:** All security scan results are uploaded to GitHub's Security tab for centralized vulnerability management.
+
+#### 3. **Build and Deploy** (`.github/workflows/deploy.yml`)
+**Triggers:** Push to main, version tags (v*.*.*), Manual dispatch
+
+**Container Registry:** GitHub Container Registry (ghcr.io)
+
+**Jobs:**
+- **build-images**: Matrix build for all 5 services
+  - Builds Docker images with Buildx
+  - Pushes to ghcr.io
+  - Smart tagging:
+    - Branch name (e.g., main)
+    - Semantic version (e.g., v1.0.0, v1.0, v1)
+    - Git SHA (e.g., main-abc1234)
+    - Latest (for default branch)
+  - Layer caching for faster builds
+  - Generates build summary
+
+- **pre-deployment-tests**: Runs integration tests before deployment
+
+- **deploy-staging**: Automatic deployment to staging
+  - Triggers on main branch push
+  - Environment: staging
+  - SSH deployment example
+  - Runs smoke tests
+  - No manual approval required
+
+- **deploy-production**: Manual approval required
+  - Triggers on version tags (v*.*.*)
+  - Environment: production
+  - Requires manual approval in GitHub UI
+  - SSH deployment example
+  - Health checks after deployment
+  - Notifications on success/failure
+
+- **rollback**: Manual rollback capability
+  - Workflow dispatch only
+  - Can rollback staging or production
+  - Uses previous git tag
+
+- **deployment-summary**: Aggregates deployment status
+
+**AWS Integration Ready:** Workflows include commented-out AWS configuration for future cloud deployment.
+
+#### 4. **Coverage Report** (`.github/workflows/coverage-report.yml`)
+**Purpose:** Generates and uploads test coverage reports
+
+**Features:**
+- Runs after test suite completes
+- Consolidates coverage from all services
+- Uploads to Codecov with service-specific flags
+- Generates coverage badges for README
+
+#### 5. **Performance Testing** (`.github/workflows/performance.yml`)
+**Purpose:** Load testing and performance benchmarking
+
+**Features:**
+- Runs performance tests on services
+- Benchmarks API response times
+- Tracks performance trends over time
+- Fails if performance degrades beyond threshold
+
+#### 6. **Dependabot** (`.github/dependabot.yml`)
+**Purpose:** Automated dependency updates
+
+**Configuration:**
+- Monitors Python dependencies (pip)
+- Monitors npm dependencies
+- Monitors Docker base images
+- Monitors GitHub Actions versions
+- Opens PRs for security updates
+
+### Required GitHub Secrets
+
+For full CI/CD functionality, configure these secrets:
+
+```yaml
+# Optional (for deployment)
+AWS_ROLE_ARN                  # AWS role for staging deployment
+AWS_PROD_ROLE_ARN             # AWS role for production deployment
+DEPLOYMENT_SSH_KEY            # SSH key for server access
+
+# Optional (for enhanced security scanning)
+GITGUARDIAN_API_KEY           # GitGuardian API key for secret scanning
+
+# Auto-configured by GitHub
+GITHUB_TOKEN                  # Automatically provided by GitHub Actions
+```
+
+### GitHub Environments
+
+**Staging Environment:**
+- Auto-deploys on main branch push
+- URL: https://staging.gan-shmuel.example.com
+- No approval required
+- Used for QA and testing
+
+**Production Environment:**
+- Requires manual approval
+- Triggered by version tags (v*.*.*)
+- URL: https://gan-shmuel.example.com
+- Protected environment
+- Approval from designated reviewers required
+
+### Workflow Features
+
+**Quality Gates:**
+- All tests must pass before deployment
+- Coverage thresholds enforced (90-95%)
+- Security scans must complete
+- Type checking required
+- Code formatting validated
+
+**Notifications:**
+- Job summaries in GitHub UI
+- SARIF reports in Security tab
+- Coverage reports in Codecov
+- Deployment status notifications
+
+**Performance:**
+- Layer caching for Docker builds
+- Parallel job execution where possible
+- Matrix strategy for service builds
+- Cached npm/pip dependencies
+
+### Monitoring & Observability
+
+- **Security Tab**: View all vulnerability scans (Trivy, dependency scanning)
+- **Actions Tab**: View workflow runs, logs, and job summaries
+- **Packages**: View Docker images in GitHub Container Registry
+- **Codecov Integration**: Track coverage trends over time
+
 ## Important Implementation Notes
 
 ### API Gateway (Traefik)
