@@ -130,7 +130,7 @@ jobs:
 
       - name: Configure AWS credentials (if using AWS)
         if: false  # Enable if deploying to AWS
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v5
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: us-east-1
@@ -178,7 +178,7 @@ jobs:
 
       - name: Configure AWS credentials (if using AWS)
         if: false  # Enable if deploying to AWS
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v5
         with:
           role-to-assume: ${{ secrets.AWS_PROD_ROLE_ARN }}
           aws-region: us-east-1
