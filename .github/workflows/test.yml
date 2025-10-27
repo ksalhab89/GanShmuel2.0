@@ -1,0 +1,298 @@
+name: Test Suite
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  weight-service:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: weight-service
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: test_weight_db
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install UV
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+
+      - name: Add UV to PATH
+        run: echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Install dependencies
+        run: uv sync --dev
+
+      - name: Run type checking
+        run: uv run mypy src
+
+      - name: Run linting
+        run: uv run ruff check src
+
+      - name: Run tests with coverage
+        env:
+          DB_URL: mysql+aiomysql://root:root@127.0.0.1:3306/test_weight_db
+        run: uv run pytest tests/ -v --cov=src --cov-report=xml --cov-report=term --cov-fail-under=95
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./weight-service/coverage.xml
+          flags: weight-service
+          name: weight-service-coverage
+
+  billing-service:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: billing-service
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: test_billing_db
+        ports:
+          - 3307:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install UV
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+
+      - name: Add UV to PATH
+        run: echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Install dependencies
+        run: uv sync --dev
+
+      - name: Run type checking
+        run: uv run mypy src
+
+      - name: Run linting
+        run: uv run flake8 src tests
+
+      - name: Check code formatting
+        run: uv run black --check src tests
+
+      - name: Check import sorting
+        run: uv run isort --check-only src tests
+
+      - name: Run tests with coverage
+        env:
+          DB_URL: mysql+pymysql://root:root@127.0.0.1:3307/test_billing_db
+        run: uv run pytest tests/ -v --cov=src --cov-report=xml --cov-report=term --cov-fail-under=90
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./billing-service/coverage.xml
+          flags: billing-service
+          name: billing-service-coverage
+
+  shift-service:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: shift-service
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: test_shift_db
+        ports:
+          - 3308:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install UV
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+
+      - name: Add UV to PATH
+        run: echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Install dependencies
+        run: uv sync --dev
+
+      - name: Run type checking
+        run: uv run mypy src
+
+      - name: Run linting
+        run: uv run ruff check src
+
+      - name: Run tests with coverage
+        env:
+          DB_URL: mysql+aiomysql://root:root@127.0.0.1:3308/test_shift_db
+          REDIS_URL: redis://127.0.0.1:6379
+        run: uv run pytest tests/ -v --cov=src --cov-report=xml --cov-report=term --cov-fail-under=90
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./shift-service/coverage.xml
+          flags: shift-service
+          name: shift-service-coverage
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run type checking
+        run: npm run type-check
+
+      - name: Run linting
+        run: npm run lint
+
+      - name: Run tests with coverage
+        run: npm run test:coverage
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./frontend/coverage/coverage-final.json
+          flags: frontend
+          name: frontend-coverage
+
+  integration-tests:
+    runs-on: ubuntu-latest
+    needs: [weight-service, billing-service, shift-service, frontend]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Start services with Docker Compose
+        run: docker-compose up -d
+
+      - name: Wait for services to be healthy
+        run: |
+          echo "Waiting for services to be ready..."
+          sleep 30
+
+          # Check weight service
+          curl -f http://localhost:5001/health || exit 1
+
+          # Check billing service
+          curl -f http://localhost:5002/health || exit 1
+
+          # Check shift service
+          curl -f http://localhost:5003/health || exit 1
+
+          # Check frontend
+          curl -f http://localhost:3000 || exit 1
+
+      - name: Set up Python for integration tests
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install test dependencies
+        run: |
+          pip install pytest pytest-asyncio httpx
+
+      - name: Run integration tests
+        run: |
+          if [ -d "integration-tests" ]; then
+            pytest integration-tests/ -v
+          else
+            echo "No integration tests directory found, skipping..."
+          fi
+
+      - name: Show service logs on failure
+        if: failure()
+        run: docker-compose logs
+
+      - name: Stop services
+        if: always()
+        run: docker-compose down -v
+
+  quality-gate:
+    runs-on: ubuntu-latest
+    needs: [weight-service, billing-service, shift-service, frontend, integration-tests]
+
+    steps:
+      - name: Quality Gate Passed
+        run: |
+          echo "================================"
+          echo "✓ All tests passed!"
+          echo "✓ Code quality checks passed!"
+          echo "✓ Coverage requirements met!"
+          echo "================================"

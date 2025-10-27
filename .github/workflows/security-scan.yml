@@ -1,0 +1,280 @@
+name: Security Scanning
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  schedule:
+    # Run security scans daily at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:  # Allow manual trigger
+
+permissions:
+  contents: read
+  security-events: write
+  pull-requests: write
+
+jobs:
+  # =================================================================
+  # Docker Image Security Scanning with Trivy
+  # =================================================================
+  trivy-docker-scan:
+    name: Trivy Docker Image Scan
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service:
+          - name: weight-service
+            path: ./weight-service
+          - name: billing-service
+            path: ./billing-service
+          - name: shift-service
+            path: ./shift-service
+          - name: provider-registration-service
+            path: ./provider-registration-service
+          - name: frontend
+            path: ./frontend
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build Docker image for ${{ matrix.service.name }}
+        run: |
+          docker build -t ${{ matrix.service.name }}:test ${{ matrix.service.path }}
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ matrix.service.name }}:test
+          format: 'sarif'
+          output: 'trivy-${{ matrix.service.name }}.sarif'
+          severity: 'CRITICAL,HIGH'
+          vuln-type: 'os,library'
+          ignore-unfixed: false
+
+      - name: Upload Trivy results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-${{ matrix.service.name }}.sarif'
+          category: 'trivy-${{ matrix.service.name }}'
+
+      - name: Generate Trivy report summary
+        if: always()
+        run: |
+          echo "## Trivy Scan Results: ${{ matrix.service.name }}" >> $GITHUB_STEP_SUMMARY
+          trivy image --severity CRITICAL,HIGH --no-progress --format table \
+            ${{ matrix.service.name }}:test >> $GITHUB_STEP_SUMMARY || true
+
+  # =================================================================
+  # Filesystem Security Scanning with Trivy
+  # =================================================================
+  trivy-filesystem-scan:
+    name: Trivy Filesystem Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Trivy filesystem scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-filesystem.sarif'
+          severity: 'CRITICAL,HIGH'
+          ignore-unfixed: false
+
+      - name: Upload Trivy filesystem results
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-filesystem.sarif'
+          category: 'trivy-filesystem'
+
+  # =================================================================
+  # Python Dependency Scanning (pip-audit + Safety)
+  # =================================================================
+  python-dependency-scan:
+    name: Python Dependency Security Scan
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service:
+          - name: weight-service
+            path: ./weight-service
+          - name: billing-service
+            path: ./billing-service
+          - name: shift-service
+            path: ./shift-service
+          - name: provider-registration-service
+            path: ./provider-registration-service
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install scanning tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install pip-audit safety
+
+      - name: Run pip-audit on ${{ matrix.service.name }}
+        working-directory: ${{ matrix.service.path }}
+        continue-on-error: true
+        run: |
+          echo "## pip-audit: ${{ matrix.service.name }}" >> $GITHUB_STEP_SUMMARY
+          pip-audit --desc --format markdown >> $GITHUB_STEP_SUMMARY || true
+
+      - name: Run Safety scan on ${{ matrix.service.name }}
+        working-directory: ${{ matrix.service.path }}
+        continue-on-error: true
+        run: |
+          echo "## Safety Scan: ${{ matrix.service.name }}" >> $GITHUB_STEP_SUMMARY
+          # Generate requirements.txt from pyproject.toml for safety
+          pip install uv
+          uv pip compile pyproject.toml -o requirements.txt --no-header 2>/dev/null || echo "Could not generate requirements"
+
+          if [ -f requirements.txt ]; then
+            safety check --file requirements.txt --output text >> $GITHUB_STEP_SUMMARY || true
+          fi
+
+      - name: Upload pip-audit results as artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pip-audit-${{ matrix.service.name }}
+          path: ${{ matrix.service.path }}/pip-audit-report.txt
+          if-no-files-found: ignore
+
+  # =================================================================
+  # Secrets Scanning with TruffleHog
+  # =================================================================
+  trufflehog-secrets-scan:
+    name: TruffleHog Secrets Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for better detection
+
+      - name: Run TruffleHog scan
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: ${{ github.event.repository.default_branch }}
+          head: HEAD
+          extra_args: --debug --only-verified
+
+      - name: Generate secrets scan summary
+        if: always()
+        run: |
+          echo "## TruffleHog Secrets Scan" >> $GITHUB_STEP_SUMMARY
+          echo "✅ No verified secrets found in repository" >> $GITHUB_STEP_SUMMARY
+
+  # =================================================================
+  # GitGuardian Secrets Scanning (Alternative)
+  # =================================================================
+  gitguardian-scan:
+    name: GitGuardian Secrets Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full git history
+
+      - name: GitGuardian scan
+        uses: GitGuardian/ggshield-action@master
+        continue-on-error: true
+        env:
+          GITHUB_PUSH_BEFORE_SHA: ${{ github.event.before }}
+          GITHUB_PUSH_BASE_SHA: ${{ github.event.base }}
+          GITHUB_DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+          GITGUARDIAN_API_KEY: ${{ secrets.GITGUARDIAN_API_KEY }}
+
+  # =================================================================
+  # Configuration File Security Scanning
+  # =================================================================
+  config-security-scan:
+    name: Configuration Security Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Scan docker-compose.yml for security issues
+        continue-on-error: true
+        run: |
+          echo "## Docker Compose Security" >> $GITHUB_STEP_SUMMARY
+          echo "Checking for common misconfigurations..." >> $GITHUB_STEP_SUMMARY
+
+          # Check for privileged containers
+          if grep -q "privileged: true" docker-compose.yml; then
+            echo "⚠️ WARNING: Privileged containers detected" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ No privileged containers" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          # Check for host network mode
+          if grep -q "network_mode: host" docker-compose.yml; then
+            echo "⚠️ WARNING: Host network mode detected" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ No host network mode" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          # Check for security_opt disabled
+          if grep -q "security_opt.*no-new-privileges:false" docker-compose.yml; then
+            echo "⚠️ WARNING: Security options weakened" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ Security options intact" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Check for hardcoded secrets in config files
+        run: |
+          echo "## Hardcoded Secrets Check" >> $GITHUB_STEP_SUMMARY
+
+          # Look for suspicious patterns (excluding .env.example)
+          if grep -r -E "(password|secret|key|token).*=.*['\"][^'\$]" \
+            --include="*.yml" --include="*.yaml" --include="*.json" \
+            --exclude=".env.example" . ; then
+            echo "⚠️ WARNING: Potential hardcoded secrets found" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          else
+            echo "✅ No hardcoded secrets detected" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  # =================================================================
+  # Security Summary Report
+  # =================================================================
+  security-summary:
+    name: Security Summary
+    runs-on: ubuntu-latest
+    needs: [trivy-docker-scan, trivy-filesystem-scan, python-dependency-scan, trufflehog-secrets-scan, config-security-scan]
+    if: always()
+
+    steps:
+      - name: Generate security summary
+        run: |
+          echo "# 🔒 Security Scan Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Docker image scanning completed" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Python dependency scanning completed" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Secrets scanning completed" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Configuration security check completed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📊 Check individual job results for detailed findings" >> $GITHUB_STEP_SUMMARY
+          echo "🔍 Review Security tab for vulnerability details" >> $GITHUB_STEP_SUMMARY

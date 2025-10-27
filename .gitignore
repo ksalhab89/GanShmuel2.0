@@ -1,0 +1,110 @@
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# IDE files
+.vscode/
+.idea/
+
+# Claude Code local settings (personal)
+.claude/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Dependencies
+node_modules/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Build outputs
+dist/
+build/
+*.egg-info/
+
+# Coverage reports
+htmlcov/
+.coverage
+coverage.xml
+*.cover
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# Docker
+.dockerignore
+
+# Python virtual environments
+venv/
+.venv/
+env/
+ENV/
+
+# Python build artifacts
+*.egg-info/
+dist/
+build/
+
+# Python cache
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+pytest_output.txt
+
+# Test outputs
+test_migrations.py
+.hypothesis/
+
+# Docker volumes and data
+docker-volumes/
+mysql-data/
+postgres-data/
+redis-data/
+prometheus-data/
+grafana-data/
+
+# Uploaded files and data
+*/in/*
+!*/in/.gitkeep
+weight-service/in/*
+billing-service/in/*
+
+# Database dumps
+*.sql
+*.dump
+*.sqlite
+*.db
+
+# Generated reports and exports
+*.xlsx
+*.csv
+!rates.xlsx
+!containers.csv
+!containers.json
+
+# Package lock files (optional - some teams commit these)
+# package-lock.json
+# yarn.lock
+# uv.lock
+
+# Alembic
+alembic/versions/*.pyc
+
+# Service-specific .env files (already covered by .env pattern but being explicit)
+weight-service/.env
+billing-service/.env
+shift-service/.env
+provider-registration-service/.env
+frontend/.env
+populate-data/.env

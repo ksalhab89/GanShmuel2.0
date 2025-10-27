@@ -1,0 +1,22 @@
+# Test Dockerfile with dev dependencies
+FROM python:3.13-slim
+
+# Install uv
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
+
+# Set working directory
+WORKDIR /app
+
+# Copy project files
+COPY pyproject.toml ./
+COPY src/ ./src/
+COPY tests/ ./tests/
+
+# Install dependencies including dev dependencies
+RUN uv sync --no-cache --all-extras --dev
+
+# Make sure we use the virtual environment
+ENV PATH="/app/.venv/bin:$PATH"
+
+# Run tests by default
+CMD ["python", "-m", "pytest", "tests/", "-v"]

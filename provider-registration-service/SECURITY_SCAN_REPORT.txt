@@ -1,0 +1,36 @@
+================================================================================
+SQL INJECTION VULNERABILITY SCAN REPORT
+================================================================================
+
+SUMMARY
+--------------------------------------------------------------------------------
+Files Scanned: 2
+SQL Injection Issues Found: 0
+Safe SQL Patterns Found: 15
+
+NO SECURITY ISSUES DETECTED
+================================================================================
+
+[OK] All SQL queries use safe parameterized patterns
+[OK] No string interpolation or concatenation detected
+[OK] No f-strings in SQL queries
+
+
+SAFE SQL PATTERNS DETECTED
+================================================================================
+
+File: database.py
+--------------------------------------------------------------------------------
+  [OK] Static SQL with text() - SAFE: 1 instances
+
+
+File: candidate_service.py
+--------------------------------------------------------------------------------
+  [OK] Static SQL with text() - SAFE: 5 instances
+  [OK] Parameterized INSERT - SAFE: 1 instances
+  [OK] NULL-safe parameterized query - SAFE: 2 instances
+  [OK] Parameter binding - SAFE: 6 instances
+
+================================================================================
+SCAN COMPLETE
+================================================================================
