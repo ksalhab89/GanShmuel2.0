@@ -28,9 +28,8 @@ COPY --from=builder /app/.venv /app/.venv
 # Make sure we use the virtual environment
 ENV PATH="/app/.venv/bin:$PATH"
 
-# Copy source code and migration files
+# Copy source code
 COPY src/ ./src/
-COPY alembic/ ./alembic/
 
 # Create non-root user for security
 RUN useradd --create-home --shell /bin/bash appuser && \
