@@ -1,0 +1,178 @@
+"""Business logic for candidate management"""
+
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import text
+from typing import List, Tuple, Optional
+from uuid import UUID
+from ..models.schemas import CandidateCreate, CandidateResponse
+import json
+
+
+class ConcurrentModificationError(Exception):
+    """Raised when optimistic locking detects concurrent modification"""
+    pass
+
+
+class CandidateService:
+    """Service for managing provider candidates"""
+
+    def __init__(self, db: AsyncSession):
+        self.db = db
+
+    def _build_response(self, row) -> CandidateResponse:
+        """Build CandidateResponse from database row"""
+        products = (
+            row.products
+            if isinstance(row.products, list)
+            else (json.loads(row.products) if row.products else [])
+        )
+
+        return CandidateResponse(
+            candidate_id=row.id,
+            status=row.status,
+            company_name=row.company_name,
+            contact_email=row.contact_email,
+            phone=row.phone,
+            products=products,
+            truck_count=row.truck_count,
+            capacity_tons_per_day=row.capacity_tons_per_day,
+            location=row.location,
+            created_at=row.created_at,
+            provider_id=row.provider_id,
+            version=row.version
+        )
+
+    async def create_candidate(self, data: CandidateCreate) -> CandidateResponse:
+        """Create a new candidate in the database"""
+        query = text("""
+            INSERT INTO candidates (company_name, contact_email, phone, products, truck_count, capacity_tons_per_day, location)
+            VALUES (:company_name, :contact_email, :phone, :products, :truck_count, :capacity_tons_per_day, :location)
+            RETURNING id, status, company_name, contact_email, phone, products, truck_count, capacity_tons_per_day, location, created_at, provider_id, version
+        """)
+
+        result = await self.db.execute(
+            query,
+            {
+                "company_name": data.company_name,
+                "contact_email": data.contact_email,
+                "phone": data.phone,
+                "products": json.dumps(data.products),
+                "truck_count": data.truck_count,
+                "capacity_tons_per_day": data.capacity_tons_per_day,
+                "location": data.location
+            }
+        )
+        await self.db.commit()
+
+        row = result.fetchone()
+        return self._build_response(row)
+
+    async def list_candidates(
+        self,
+        status: Optional[str],
+        product: Optional[str],
+        limit: int,
+        offset: int
+    ) -> Tuple[List[CandidateResponse], int]:
+        """List candidates with optional filters and pagination"""
+
+        # Build WHERE clause dynamically
+        conditions = []
+        params = {}
+
+        if status:
+            conditions.append("status = :status")
+            params["status"] = status
+
+        if product:
+            conditions.append("products @> CAST(:product AS jsonb)")
+            params["product"] = json.dumps([product])
+
+        where_clause = "WHERE " + " AND ".join(conditions) if conditions else ""
+
+        # Get total count
+        count_query = text(f"SELECT COUNT(*) FROM candidates {where_clause}")
+        count_result = await self.db.execute(count_query, params)
+        total = count_result.scalar()
+
+        # Get paginated results
+        query = text(f"""
+            SELECT id, status, company_name, contact_email, phone, products, truck_count, capacity_tons_per_day, location, created_at, provider_id, version
+            FROM candidates
+            {where_clause}
+            ORDER BY created_at DESC
+            LIMIT :limit OFFSET :offset
+        """)
+        params["limit"] = limit
+        params["offset"] = offset
+
+        result = await self.db.execute(query, params)
+        rows = result.fetchall()
+
+        candidates = [self._build_response(row) for row in rows]
+
+        return candidates, total
+
+    async def get_candidate(self, candidate_id: UUID) -> Optional[CandidateResponse]:
+        """Get a single candidate by ID"""
+        query = text("""
+            SELECT id, status, company_name, contact_email, phone, products, truck_count, capacity_tons_per_day, location, created_at, provider_id, version
+            FROM candidates WHERE id = :id
+        """)
+        result = await self.db.execute(query, {"id": candidate_id})
+        row = result.fetchone()
+
+        if not row:
+            return None
+
+        return self._build_response(row)
+
+    async def approve_candidate(
+        self,
+        candidate_id: UUID,
+        provider_id: int,
+        expected_version: int
+    ) -> CandidateResponse:
+        """
+        Approve candidate with optimistic locking
+
+        Args:
+            candidate_id: UUID of candidate to approve
+            provider_id: Provider ID from billing service
+            expected_version: Current version for optimistic locking
+
+        Returns:
+            Updated candidate response
+
+        Raises:
+            ConcurrentModificationError: If version changed (concurrent modification detected)
+        """
+        query = text("""
+            UPDATE candidates
+            SET status = 'approved',
+                provider_id = :provider_id,
+                version = version + 1
+            WHERE id = :id
+              AND status = 'pending'
+              AND version = :expected_version
+            RETURNING id, status, company_name, contact_email, phone, products,
+                      truck_count, capacity_tons_per_day, location, created_at,
+                      provider_id, version
+        """)
+
+        result = await self.db.execute(query, {
+            "id": candidate_id,
+            "provider_id": provider_id,
+            "expected_version": expected_version
+        })
+        await self.db.commit()
+
+        row = result.fetchone()
+
+        if not row:
+            # Either: 1) candidate doesn't exist, 2) not pending, or 3) version mismatch
+            raise ConcurrentModificationError(
+                "Candidate was modified by another process or is no longer pending"
+            )
+
+        return self._build_response(row)

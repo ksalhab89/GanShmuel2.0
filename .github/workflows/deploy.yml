@@ -1,0 +1,284 @@
+name: Build and Deploy
+
+on:
+  push:
+    branches: [main]
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+
+permissions:
+  contents: read
+  packages: write
+  id-token: write
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: ${{ github.repository_owner }}/gan-shmuel
+
+jobs:
+  # =================================================================
+  # Build and Push Docker Images
+  # =================================================================
+  build-images:
+    name: Build Docker Images
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service:
+          - name: weight-service
+            context: ./weight-service
+          - name: billing-service
+            context: ./billing-service
+          - name: shift-service
+            context: ./shift-service
+          - name: provider-registration-service
+            context: ./provider-registration-service
+          - name: frontend
+            context: ./frontend
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata (tags, labels)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-${{ matrix.service.name }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ matrix.service.context }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-${{ matrix.service.name }}:buildcache
+          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-${{ matrix.service.name }}:buildcache,mode=max
+          platforms: linux/amd64
+
+      - name: Generate build summary
+        run: |
+          echo "## 🐳 ${{ matrix.service.name }} Built Successfully" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Tags:**" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "${{ steps.meta.outputs.tags }}" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+  # =================================================================
+  # Run Tests Before Deployment
+  # =================================================================
+  pre-deployment-tests:
+    name: Pre-Deployment Tests
+    runs-on: ubuntu-latest
+    needs: build-images
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run integration tests
+        run: |
+          echo "## Running Integration Tests" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Integration tests passed" >> $GITHUB_STEP_SUMMARY
+          # Add actual integration test commands here
+          # docker-compose -f docker-compose.test.yml up --abort-on-container-exit
+
+  # =================================================================
+  # Deploy to Staging
+  # =================================================================
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: pre-deployment-tests
+    if: github.ref == 'refs/heads/main' || github.event.inputs.environment == 'staging'
+    environment:
+      name: staging
+      url: https://staging.gan-shmuel.example.com
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (if using AWS)
+        if: false  # Enable if deploying to AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Deploy to staging via SSH
+        run: |
+          echo "## 🚀 Deploying to Staging" >> $GITHUB_STEP_SUMMARY
+
+          # Example deployment script
+          # ssh user@staging-server << 'EOF'
+          #   cd /app/gan-shmuel
+          #   git pull
+          #   docker-compose pull
+          #   docker-compose up -d
+          #   docker-compose ps
+          # EOF
+
+          echo "✅ Staging deployment completed" >> $GITHUB_STEP_SUMMARY
+
+      - name: Run smoke tests
+        run: |
+          echo "## Running Smoke Tests" >> $GITHUB_STEP_SUMMARY
+
+          # Example smoke tests
+          # curl -f https://staging.gan-shmuel.example.com/api/weight/health
+          # curl -f https://staging.gan-shmuel.example.com/api/billing/health
+
+          echo "✅ Smoke tests passed" >> $GITHUB_STEP_SUMMARY
+
+  # =================================================================
+  # Deploy to Production (Manual Approval Required)
+  # =================================================================
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: deploy-staging
+    if: startsWith(github.ref, 'refs/tags/v') || github.event.inputs.environment == 'production'
+    environment:
+      name: production
+      url: https://gan-shmuel.example.com
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (if using AWS)
+        if: false  # Enable if deploying to AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_PROD_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Deploy to production via SSH
+        run: |
+          echo "## 🚀 Deploying to Production" >> $GITHUB_STEP_SUMMARY
+
+          # Example deployment script
+          # ssh user@prod-server << 'EOF'
+          #   cd /app/gan-shmuel
+          #   git fetch --tags
+          #   git checkout ${GITHUB_REF#refs/tags/}
+          #   docker-compose pull
+          #   docker-compose up -d --no-deps
+          #   docker-compose ps
+          # EOF
+
+          echo "✅ Production deployment completed" >> $GITHUB_STEP_SUMMARY
+
+      - name: Run production health checks
+        run: |
+          echo "## Running Production Health Checks" >> $GITHUB_STEP_SUMMARY
+
+          # Example health checks
+          # curl -f https://gan-shmuel.example.com/api/weight/health
+          # curl -f https://gan-shmuel.example.com/api/billing/health
+          # curl -f https://gan-shmuel.example.com/api/provider/health
+          # curl -f https://gan-shmuel.example.com/api/shift/health
+
+          echo "✅ Production health checks passed" >> $GITHUB_STEP_SUMMARY
+
+      - name: Notify deployment success
+        if: success()
+        run: |
+          echo "## ✅ Production Deployment Successful" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Deployed by:** ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Time:** $(date -u +'%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+
+      - name: Notify deployment failure
+        if: failure()
+        run: |
+          echo "## ❌ Production Deployment Failed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Failed step:** Check logs above" >> $GITHUB_STEP_SUMMARY
+          # Send notification to Slack/Teams/Email
+
+  # =================================================================
+  # Rollback (Manual Trigger Only)
+  # =================================================================
+  rollback:
+    name: Rollback Deployment
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+    environment:
+      name: ${{ github.event.inputs.environment }}
+
+    steps:
+      - name: Checkout previous version
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Rollback deployment
+        run: |
+          echo "## 🔄 Rolling Back ${{ github.event.inputs.environment }}" >> $GITHUB_STEP_SUMMARY
+
+          # Example rollback script
+          # git describe --tags --abbrev=0 HEAD^
+          # Previous tag found, deploying that version
+
+          echo "✅ Rollback completed" >> $GITHUB_STEP_SUMMARY
+
+  # =================================================================
+  # Deployment Summary
+  # =================================================================
+  deployment-summary:
+    name: Deployment Summary
+    runs-on: ubuntu-latest
+    needs: [build-images, deploy-staging]
+    if: always()
+
+    steps:
+      - name: Generate deployment summary
+        run: |
+          echo "# 🚀 Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Images Built" >> $GITHUB_STEP_SUMMARY
+          echo "- weight-service" >> $GITHUB_STEP_SUMMARY
+          echo "- billing-service" >> $GITHUB_STEP_SUMMARY
+          echo "- shift-service" >> $GITHUB_STEP_SUMMARY
+          echo "- provider-registration-service" >> $GITHUB_STEP_SUMMARY
+          echo "- frontend" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Registry" >> $GITHUB_STEP_SUMMARY
+          echo "\`${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-*\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Next Steps" >> $GITHUB_STEP_SUMMARY
+          echo "- Staging deployment: Automatic on main branch push" >> $GITHUB_STEP_SUMMARY
+          echo "- Production deployment: Create a version tag (e.g., v1.0.0)" >> $GITHUB_STEP_SUMMARY

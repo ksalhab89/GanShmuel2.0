@@ -1,0 +1,43 @@
+# Traefik Static Configuration
+# API Gateway for Gan Shmuel System
+
+# Entry points for incoming traffic
+entryPoints:
+  web:
+    address: ":80"
+  websecure:
+    address: ":443"
+  traefik:
+    address: ":9999"  # Dashboard and metrics on 9999
+
+api:
+  dashboard: true
+  insecure: true  # Exposed on traefik entrypoint (9999)
+
+# Service discovery from Docker
+providers:
+  docker:
+    endpoint: "unix:///var/run/docker.sock"
+    exposedByDefault: false  # Services must opt-in with traefik.enable=true
+    network: gan-shmuel-2_gan-shmuel-network  # Docker Compose prefixes with project name
+
+# Access logs for monitoring
+accessLog:
+  filePath: "/var/log/traefik/access.log"
+  format: json
+
+# Traefik logs
+log:
+  level: DEBUG
+  format: json
+
+# Metrics for Prometheus
+metrics:
+  prometheus:
+    addEntryPointsLabels: true
+    addServicesLabels: true
+    entryPoint: traefik
+
+# Health check endpoint
+ping:
+  entryPoint: web

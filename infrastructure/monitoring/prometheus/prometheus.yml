@@ -1,0 +1,101 @@
+# Prometheus configuration for Gan Shmuel services
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'gan-shmuel'
+    environment: 'production'
+
+# Alerting configuration
+rule_files:
+  - /etc/prometheus/alerts/*.yml
+
+# Service discovery and scraping configuration
+scrape_configs:
+  # Weight Service
+  - job_name: 'weight-service'
+    static_configs:
+      - targets: ['weight-service:5001']
+        labels:
+          service: 'weight'
+          team: 'devops'
+    metrics_path: /metrics
+    scrape_interval: 15s
+
+  # Billing Service
+  - job_name: 'billing-service'
+    static_configs:
+      - targets: ['billing-service:5002']
+        labels:
+          service: 'billing'
+          team: 'devops'
+    metrics_path: /metrics
+    scrape_interval: 15s
+
+  # Shift Service
+  - job_name: 'shift-service'
+    static_configs:
+      - targets: ['shift-service:5003']
+        labels:
+          service: 'shift'
+          team: 'devops'
+    metrics_path: /metrics
+    scrape_interval: 15s
+
+  # Provider Registration Service
+  - job_name: 'provider-service'
+    static_configs:
+      - targets: ['provider-registration-service:5004']
+        labels:
+          service: 'provider'
+          team: 'devops'
+    metrics_path: /metrics
+    scrape_interval: 15s
+
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+        labels:
+          service: 'prometheus'
+          team: 'monitoring'
+
+  # Traefik API Gateway
+  - job_name: 'traefik'
+    static_configs:
+      - targets: ['traefik:9999']
+        labels:
+          service: 'traefik'
+          team: 'gateway'
+    metrics_path: /metrics
+    scrape_interval: 15s
+
+  # MySQL Exporter for Weight Service Database
+  - job_name: 'weight-mysql'
+    static_configs:
+      - targets: ['weight-mysql-exporter:9104']
+        labels:
+          service: 'weight-db'
+          team: 'database'
+    metrics_path: /metrics
+    scrape_interval: 15s
+
+  # MySQL Exporter for Billing Service Database
+  - job_name: 'billing-mysql'
+    static_configs:
+      - targets: ['billing-mysql-exporter:9104']
+        labels:
+          service: 'billing-db'
+          team: 'database'
+    metrics_path: /metrics
+    scrape_interval: 15s
+
+  # MySQL Exporter for Shift Service Database
+  - job_name: 'shift-mysql'
+    static_configs:
+      - targets: ['shift-mysql-exporter:9104']
+        labels:
+          service: 'shift-db'
+          team: 'database'
+    metrics_path: /metrics
+    scrape_interval: 15s

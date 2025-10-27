@@ -1,0 +1,50 @@
+services:
+  billing-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: gan-shmuel-billing-api
+    image: gan-shmuel/billing-service:latest
+    environment:
+      DB_HOST: billing-db
+      DB_USER: billinguser
+      DB_PASSWORD: billingpass
+      DB_NAME: billdb
+      DB_PORT: 3306
+      WEIGHT_SERVICE_URL: http://host.docker.internal:5001
+      UPLOAD_DIRECTORY: /in
+    ports:
+      - "5002:5002"
+    volumes:
+      - ./in:/in
+    depends_on:
+      - billing-db
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+    networks:
+      - billing-network
+
+  billing-db:
+    image: mysql:8.0
+    container_name: gan-shmuel-billing-db
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: billdb
+      MYSQL_USER: billinguser
+      MYSQL_PASSWORD: billingpass
+    ports:
+      - "3307:3306"
+    volumes:
+      - billing_data:/var/lib/mysql
+      - ./billingdb.sql:/docker-entrypoint-initdb.d/init.sql
+    restart: unless-stopped
+    networks:
+      - billing-network
+
+volumes:
+  billing_data:
+
+networks:
+  billing-network:
+    driver: bridge

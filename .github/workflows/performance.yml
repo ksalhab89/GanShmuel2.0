@@ -1,0 +1,188 @@
+name: Performance Tests
+
+on:
+  schedule:
+    # Run every Sunday at 2 AM UTC
+    - cron: '0 2 * * 0'
+  workflow_dispatch:  # Allow manual triggering
+
+jobs:
+  performance-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Start services
+        run: docker-compose up -d
+
+      - name: Wait for services
+        run: |
+          echo "Waiting for services to be ready..."
+          sleep 30
+
+          # Verify services are healthy
+          curl -f http://localhost:5001/health || exit 1
+          curl -f http://localhost:5002/health || exit 1
+          curl -f http://localhost:5003/health || exit 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install performance testing tools
+        run: |
+          pip install locust pytest-benchmark httpx
+
+      - name: Create performance test script
+        run: |
+          cat > performance_test.py << 'EOF'
+          import httpx
+          import time
+          import statistics
+          from concurrent.futures import ThreadPoolExecutor, as_completed
+
+          BASE_URL_WEIGHT = "http://localhost:5001"
+          BASE_URL_BILLING = "http://localhost:5002"
+          BASE_URL_SHIFT = "http://localhost:5003"
+
+          def test_weight_service_throughput():
+              """Test weight service can handle concurrent requests"""
+              print("\n=== Weight Service Throughput Test ===")
+
+              def make_request(i):
+                  start = time.time()
+                  response = httpx.get(f"{BASE_URL_WEIGHT}/health")
+                  duration = time.time() - start
+                  return response.status_code == 200, duration
+
+              num_requests = 100
+              max_workers = 10
+
+              with ThreadPoolExecutor(max_workers=max_workers) as executor:
+                  futures = [executor.submit(make_request, i) for i in range(num_requests)]
+                  results = [f.result() for f in as_completed(futures)]
+
+              success_count = sum(1 for success, _ in results if success)
+              durations = [duration for _, duration in results]
+
+              print(f"Total requests: {num_requests}")
+              print(f"Successful: {success_count}")
+              print(f"Failed: {num_requests - success_count}")
+              print(f"Average response time: {statistics.mean(durations):.3f}s")
+              print(f"Median response time: {statistics.median(durations):.3f}s")
+              print(f"95th percentile: {statistics.quantiles(durations, n=20)[18]:.3f}s")
+
+              assert success_count >= num_requests * 0.95, "Success rate below 95%"
+              assert statistics.mean(durations) < 1.0, "Average response time too high"
+
+          def test_billing_service_throughput():
+              """Test billing service can handle concurrent requests"""
+              print("\n=== Billing Service Throughput Test ===")
+
+              def make_request(i):
+                  start = time.time()
+                  response = httpx.get(f"{BASE_URL_BILLING}/health")
+                  duration = time.time() - start
+                  return response.status_code == 200, duration
+
+              num_requests = 100
+              max_workers = 10
+
+              with ThreadPoolExecutor(max_workers=max_workers) as executor:
+                  futures = [executor.submit(make_request, i) for i in range(num_requests)]
+                  results = [f.result() for f in as_completed(futures)]
+
+              success_count = sum(1 for success, _ in results if success)
+              durations = [duration for _, duration in results]
+
+              print(f"Total requests: {num_requests}")
+              print(f"Successful: {success_count}")
+              print(f"Failed: {num_requests - success_count}")
+              print(f"Average response time: {statistics.mean(durations):.3f}s")
+              print(f"Median response time: {statistics.median(durations):.3f}s")
+
+              assert success_count >= num_requests * 0.95, "Success rate below 95%"
+
+          def test_shift_service_throughput():
+              """Test shift service can handle concurrent requests"""
+              print("\n=== Shift Service Throughput Test ===")
+
+              def make_request(i):
+                  start = time.time()
+                  response = httpx.get(f"{BASE_URL_SHIFT}/health")
+                  duration = time.time() - start
+                  return response.status_code == 200, duration
+
+              num_requests = 100
+              max_workers = 10
+
+              with ThreadPoolExecutor(max_workers=max_workers) as executor:
+                  futures = [executor.submit(make_request, i) for i in range(num_requests)]
+                  results = [f.result() for f in as_completed(futures)]
+
+              success_count = sum(1 for success, _ in results if success)
+              durations = [duration for _, duration in results]
+
+              print(f"Total requests: {num_requests}")
+              print(f"Successful: {success_count}")
+              print(f"Failed: {num_requests - success_count}")
+              print(f"Average response time: {statistics.mean(durations):.3f}s")
+
+              assert success_count >= num_requests * 0.95, "Success rate below 95%"
+
+          if __name__ == "__main__":
+              test_weight_service_throughput()
+              test_billing_service_throughput()
+              test_shift_service_throughput()
+              print("\n=== All Performance Tests Passed ===")
+          EOF
+
+      - name: Run performance tests
+        run: python performance_test.py
+
+      - name: Generate performance report
+        run: |
+          cat > performance-report.md << 'EOF'
+          # Performance Test Report
+
+          **Date:** $(date)
+          **Commit:** ${{ github.sha }}
+
+          ## Test Results
+
+          Performance tests completed successfully.
+
+          ### Metrics
+          - All services maintained >95% success rate
+          - Response times within acceptable limits
+          - Concurrent request handling verified
+
+          ### Services Tested
+          - Weight Service (port 5001)
+          - Billing Service (port 5002)
+          - Shift Service (port 5003)
+
+          EOF
+
+      - name: Upload performance report
+        uses: actions/upload-artifact@v3
+        with:
+          name: performance-report
+          path: performance-report.md
+
+      - name: Show service metrics
+        run: |
+          echo "=== Prometheus Metrics ==="
+          curl -s http://localhost:5001/metrics | grep -E "http_requests_total|http_request_duration"
+          curl -s http://localhost:5002/metrics | grep -E "http_requests_total|http_request_duration"
+          curl -s http://localhost:5003/metrics | grep -E "http_requests_total|http_request_duration"
+
+      - name: Stop services
+        if: always()
+        run: docker-compose down -v

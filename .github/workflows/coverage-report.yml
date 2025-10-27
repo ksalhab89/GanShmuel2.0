@@ -1,0 +1,153 @@
+name: Coverage Report
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  coverage:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install UV
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+
+      - name: Add UV to PATH
+        run: echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      # Weight Service Coverage
+      - name: Weight Service - Install dependencies
+        working-directory: weight-service
+        run: uv sync --dev
+
+      - name: Weight Service - Generate coverage
+        working-directory: weight-service
+        run: |
+          uv run pytest tests/ -v --cov=src --cov-report=xml --cov-report=html --cov-report=term
+        continue-on-error: true
+
+      - name: Weight Service - Upload HTML coverage
+        uses: actions/upload-artifact@v3
+        with:
+          name: weight-service-coverage-html
+          path: weight-service/htmlcov/
+
+      # Billing Service Coverage
+      - name: Billing Service - Install dependencies
+        working-directory: billing-service
+        run: uv sync --dev
+
+      - name: Billing Service - Generate coverage
+        working-directory: billing-service
+        run: |
+          uv run pytest tests/ -v --cov=src --cov-report=xml --cov-report=html --cov-report=term
+        continue-on-error: true
+
+      - name: Billing Service - Upload HTML coverage
+        uses: actions/upload-artifact@v3
+        with:
+          name: billing-service-coverage-html
+          path: billing-service/htmlcov/
+
+      # Shift Service Coverage
+      - name: Shift Service - Install dependencies
+        working-directory: shift-service
+        run: uv sync --dev
+
+      - name: Shift Service - Generate coverage
+        working-directory: shift-service
+        run: |
+          uv run pytest tests/ -v --cov=src --cov-report=xml --cov-report=html --cov-report=term
+        continue-on-error: true
+
+      - name: Shift Service - Upload HTML coverage
+        uses: actions/upload-artifact@v3
+        with:
+          name: shift-service-coverage-html
+          path: shift-service/htmlcov/
+
+      # Frontend Coverage
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Frontend - Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Frontend - Generate coverage
+        working-directory: frontend
+        run: npm run test:coverage
+        continue-on-error: true
+
+      - name: Frontend - Upload HTML coverage
+        uses: actions/upload-artifact@v3
+        with:
+          name: frontend-coverage-html
+          path: frontend/coverage/
+
+      # Combined Coverage Report
+      - name: Generate combined coverage report
+        run: |
+          echo "# Coverage Report Summary" > coverage-summary.md
+          echo "" >> coverage-summary.md
+          echo "## Weight Service" >> coverage-summary.md
+          if [ -f weight-service/coverage.xml ]; then
+            echo "Coverage report generated" >> coverage-summary.md
+          else
+            echo "No coverage report available" >> coverage-summary.md
+          fi
+          echo "" >> coverage-summary.md
+          echo "## Billing Service" >> coverage-summary.md
+          if [ -f billing-service/coverage.xml ]; then
+            echo "Coverage report generated" >> coverage-summary.md
+          else
+            echo "No coverage report available" >> coverage-summary.md
+          fi
+          echo "" >> coverage-summary.md
+          echo "## Shift Service" >> coverage-summary.md
+          if [ -f shift-service/coverage.xml ]; then
+            echo "Coverage report generated" >> coverage-summary.md
+          else
+            echo "No coverage report available" >> coverage-summary.md
+          fi
+          echo "" >> coverage-summary.md
+          echo "## Frontend" >> coverage-summary.md
+          if [ -f frontend/coverage/coverage-final.json ]; then
+            echo "Coverage report generated" >> coverage-summary.md
+          else
+            echo "No coverage report available" >> coverage-summary.md
+          fi
+
+      - name: Upload coverage summary
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage-summary
+          path: coverage-summary.md
+
+      - name: Comment PR with coverage
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            const summary = fs.readFileSync('coverage-summary.md', 'utf8');
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: summary
+            });

@@ -1,0 +1,62 @@
+groups:
+  - name: service_uptime
+    interval: 30s
+    rules:
+      - alert: WeightServiceDown
+        expr: up{job="weight-service"} == 0
+        for: 0s
+        labels:
+          severity: critical
+          service: weight
+          team: devops
+        annotations:
+          summary: "Weight Service is down"
+          description: "Weight service is unavailable. Immediate action required."
+          repeat_interval: 30m
+
+      - alert: BillingServiceDown
+        expr: up{job="billing-service"} == 0
+        for: 0s
+        labels:
+          severity: critical
+          service: billing
+          team: devops
+        annotations:
+          summary: "Billing Service is down"
+          description: "Billing service is unavailable. Immediate action required."
+          repeat_interval: 30m
+
+      - alert: ShiftServiceDown
+        expr: up{job="shift-service"} == 0
+        for: 0s
+        labels:
+          severity: critical
+          service: shift
+          team: devops
+        annotations:
+          summary: "Shift Service is down"
+          description: "Shift service is unavailable. Immediate action required."
+          repeat_interval: 30m
+
+      - alert: ProviderServiceDown
+        expr: up{job="provider-registration"} == 0
+        for: 0s
+        labels:
+          severity: critical
+          service: provider
+          team: devops
+        annotations:
+          summary: "Provider Registration Service is down"
+          description: "Provider registration service is unavailable. Immediate action required."
+          repeat_interval: 30m
+
+      - alert: DatabaseDown
+        expr: up{team="database"} == 0
+        for: 0s
+        labels:
+          severity: critical
+          team: database
+        annotations:
+          summary: "Database exporter is down"
+          description: "MySQL database monitoring is unavailable. Check database health immediately."
+          repeat_interval: 30m
