@@ -4,16 +4,25 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## System Overview
 
-This is the Gan Shmuel Industrial Weight Management System - a microservices architecture for handling truck weighing operations and billing for a juice factory. The system runs locally with Docker Compose and can be migrated to AWS using Terraform for cloud deployment. The system consists of six main components:
+This is the Gan Shmuel Industrial Weight Management System - a microservices architecture for handling truck weighing operations and billing for a juice factory. The system runs locally with Docker Compose and can be migrated to AWS using Terraform for cloud deployment.
+
+**GitHub Repository**: https://github.com/ksalhab89/GanShmuel2.0
+
+The system consists of five main services plus supporting infrastructure:
 
 ### Architecture Components
 
+#### Core Services
 1. **Weight Service V2** (`weight-service/`) - FastAPI service handling truck weighing operations → @weight-service/CLAUDE.md
 2. **Billing Service** (`billing-service/`) - FastAPI service for provider billing and rate management → @billing-service/CLAUDE.md
 3. **Shift Service** (`shift-service/`) - FastAPI service for operator shift management and performance tracking → @shift-service/CLAUDE.md
 4. **Provider Registration Service** (`provider-registration-service/`) - **PRODUCTION READY** FastAPI service for provider candidate registration, approval, and rejection workflows with JWT authentication, optimistic locking, and comprehensive security
-5. **Frontend** (`frontend/`) - React TypeScript application with Material-UI → @frontend/CLAUDE.md
-6. **Populate Data** (`populate-data/`) - Python service for populating test data across all services → @populate-data/README.md
+5. **Frontend** (`frontend/`) - React TypeScript application with Material-UI and real-time health monitoring → @frontend/CLAUDE.md
+
+#### Supporting Infrastructure
+- **API Gateway** (`infrastructure/gateway/`) - Traefik v3.0 as single entry point on port 80
+- **Monitoring** (`infrastructure/monitoring/`) - Prometheus + Grafana stack
+- **Populate Data** (`populate-data/`) - Python service for populating test data → @populate-data/README.md
 
 ## Quick Start Commands
 
@@ -79,6 +88,46 @@ Bruto (Gross Weight) = Neto (Net Fruit) + Truck Tara + Σ(Container Tara)
 
 ## Architecture Patterns
 
+### API Gateway Architecture (Traefik v3.0)
+
+**Single Entry Point - Port 80 Only**
+
+All external traffic flows through Traefik API Gateway on port 80. Backend service ports (5001-5004, 3000) are NOT exposed externally for security.
+
+```
+External Users (Browser)
+         │
+         ▼
+   API Gateway (Traefik :80)  ◄── ONLY PORT EXPOSED
+         │
+    ┌────┴────┬────────┬────────┬────────┐
+    ▼         ▼        ▼        ▼        ▼
+  Frontend  Weight  Billing  Shift  Provider
+   :3000    :5001    :5002   :5003    :5004
+    │         │        │        │        │
+    │    ┌───┴────────┴────────┴────────┘
+    │    │  (Services communicate directly via Docker network)
+    │    │
+    ▼    ▼
+  Browser View + Backend APIs
+```
+
+**Gateway Routes:**
+- `http://localhost/` → Frontend (React app)
+- `http://localhost/api/weight/*` → Weight Service (strips `/api/weight` prefix)
+- `http://localhost/api/billing/*` → Billing Service (strips `/api/billing` prefix)
+- `http://localhost/api/shift/*` → Shift Service (strips `/api/shift` prefix)
+- `http://localhost/api/provider/*` → Provider Service (strips `/api/provider` prefix)
+
+**CRITICAL**: All FastAPI services MUST include `root_path` parameter for OpenAPI docs to work:
+```python
+app = FastAPI(
+    title="Service Name",
+    root_path="/api/servicename",  # REQUIRED for Swagger UI behind gateway
+    docs_url="/docs",
+)
+```
+
 ### Service Architecture
 ```
 Weight Service ←→ Billing Service ←→ Provider Registration ←→ Frontend
@@ -118,6 +167,14 @@ All Python services implement clean architecture:
 - **Material-UI (MUI)** for consistent design system
 - **TanStack Query** for API state management, caching, and optimistic updates
 - **React Router v6** for client-side routing
+- **Real-time Health Monitoring**: Landing page displays live health status for all services
+  - Auto-refreshes every 10 seconds without page reload
+  - Color-coded status chips: Green (healthy), Red (down), Gray (checking)
+  - Uses Material-UI CheckCircle, Error, and HelpOutline icons
+- **Nginx Deployment**: Multi-stage Docker build with nginx serving static files
+  - Build stage: Node.js compiles React/TypeScript to static assets
+  - Runtime stage: nginx:alpine serves files (lightweight, production-ready)
+  - Cache-busting configured: HTML never cached, JS/CSS cached forever with content hashes
 - Modular component structure organized by feature (`src/components/weight/`, `src/components/billing/`, `src/components/shift/`)
 
 ## Key Technical Implementation Details
@@ -217,31 +274,78 @@ open http://localhost:3001          # Grafana dashboards
 ```
 
 ## Service Ports and Endpoints
-- **Weight Service**: 5001 (`/docs` for API documentation, `/metrics` for Prometheus)
-- **Billing Service**: 5002 (`/docs` for API documentation, `/metrics` for Prometheus)
-- **Shift Service**: 5003 (`/docs` for API documentation, `/metrics` for Prometheus)
-- **Provider Registration Service**: 5004 (`/docs` for API documentation, `/metrics` for Prometheus, `/auth/login` for JWT)
-- **Frontend**: 3000
-- **Prometheus**: 9090 (metrics collection and queries)
-- **Grafana**: 3001 (dashboards and visualization)
-- **MySQL (Weight)**: 3306
-- **MySQL (Billing)**: 3307
-- **MySQL (Shift)**: 3308
-- **PostgreSQL (Provider Registration)**: 5432
-- **Redis (Shift Cache)**: 6379
+
+### External Access (Via API Gateway - Port 80)
+**All user traffic goes through port 80:**
+- `http://localhost/` → Frontend landing page with health monitoring
+- `http://localhost/api/weight/*` → Weight Service
+- `http://localhost/api/billing/*` → Billing Service
+- `http://localhost/api/shift/*` → Shift Service
+- `http://localhost/api/provider/*` → Provider Registration Service
+
+**API Documentation (via gateway):**
+- `http://localhost/api/weight/docs` - Weight Service Swagger UI
+- `http://localhost/api/billing/docs` - Billing Service Swagger UI
+- `http://localhost/api/shift/docs` - Shift Service Swagger UI
+- `http://localhost/api/provider/docs` - Provider Registration Swagger UI
+
+**Monitoring & Operations:**
+- `http://localhost:9999/dashboard/` - Traefik Dashboard (API Gateway)
+- `http://localhost:9090` - Prometheus UI
+- `http://localhost:3001` - Grafana (admin/admin)
+
+### Internal Ports (NOT Exposed Externally - Docker Network Only)
+- **Weight Service**: 5001 (internal only)
+- **Billing Service**: 5002 (internal only)
+- **Shift Service**: 5003 (internal only)
+- **Provider Registration Service**: 5004 (internal only)
+- **Frontend**: 3000 (internal only - access via gateway on port 80)
+- **MySQL (Weight)**: 3306 (internal only)
+- **MySQL (Billing)**: 3307 (internal only)
+- **MySQL (Shift)**: 3308 (internal only)
+- **PostgreSQL (Provider Registration)**: 5432 (internal only)
+- **Redis (Shift Cache)**: 6379 (internal only)
 
 ## Important Implementation Notes
+
+### API Gateway (Traefik)
+- **Single Entry Point**: All traffic via port 80 (HTTP) - backend ports not exposed
+- **Path Stripping**: Gateway strips `/api/{service}` prefix before forwarding
+- **FastAPI root_path**: ALL services MUST set `root_path="/api/servicename"` for Swagger docs to work
+- **Service Discovery**: Auto-discovers services via Docker labels
+- **Dashboard**: Real-time monitoring at http://localhost:9999/dashboard/
+
+### Frontend
+- **Real-time Health Monitoring**: Landing page auto-refreshes service health every 10s
+- **Nginx Deployment**: Multi-stage Docker build (Node.js build → nginx serve)
+- **Cache-Busting**: HTML never cached (no-store), JS/CSS cached forever with content hashes
+- **Material-UI**: Consistent design with health status chips (green/red/gray indicators)
+
+### Docker Build
+- **Weight Service**: `.dockerignore` excludes `alembic/` directory (migrations run separately)
+- **DO NOT** try to `COPY alembic/` in Dockerfile - it will fail
+- All services use multi-stage builds with `uv` package manager
+- Production images run as non-root `appuser` for security
+
+### Git Repository
+- **Excluded from Git**: `.env` files, `.claude/` directory, `__pycache__/`, `node_modules/`, Docker volumes
+- **Included in Git**: `.env.example` templates, `.mcp.json` (uses env vars, no secrets), all source code
+- **README.md**: Professional GitHub-friendly documentation with badges and quick start
+
+### Business Logic
 - **Session Management**: Weight transactions linked by session IDs for IN/OUT pairs
 - **Force Mode**: Weight service supports bypassing business rules with `force: true`
 - **Unknown Container Tracking**: System identifies and reports containers without tara weights
 - **Rate Precedence**: Provider-specific rates override general rates based on scope
 - **Excel Processing**: Comprehensive Excel file handling for rate management
+
+### Security & Operations
 - **CORS Configuration**: Properly configured for frontend-backend communication
 - **Error Recovery**: Retry patterns and graceful degradation for service communication
 - **Shift Performance**: Real-time metrics calculation with Redis caching for optimal performance
 - **Operator Management**: Role-based access with weigher, supervisor, and admin permissions
 - **Observability**: Comprehensive metrics collection with Prometheus and visualization via Grafana dashboards
-- **Monitoring Integration**: All services expose standardized metrics for operational monitoring
+- **Monitoring Integration**: All services expose standardized metrics at `/metrics` endpoint
 - **Provider Registration**: JWT authentication with HS256, optimistic locking for concurrency, Alembic migrations for schema control
 - **Production Ready**: Provider Registration Service is production-ready with 69/69 tests passing, >90% coverage, comprehensive documentation (see DEPLOYMENT.md, API.md, OPERATIONS.md, SECURITY.md)
 - **Security Features**: SQL injection prevention via parameterized queries, admin-only approval/rejection, bcrypt password hashing, token expiration (30 min)
