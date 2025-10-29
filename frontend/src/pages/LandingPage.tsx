@@ -31,7 +31,7 @@ const LandingPage = () => {
         { key: 'weight', endpoint: '/api/weight/health' },
         { key: 'billing', endpoint: '/api/billing/health' },
         { key: 'shift', endpoint: '/api/shift/health' },
-        { key: 'provider', endpoint: '/api/provider/health' }
+        { key: 'provider', endpoint: '/api/providers/health' }
       ]
 
       const results: Record<string, ServiceHealth> = {}
@@ -141,8 +141,8 @@ const LandingPage = () => {
       name: 'Provider Registration',
       description: 'Candidate registration & approval workflow',
       icon: <PersonAdd sx={{ fontSize: 40 }} />,
-      apiDocs: '/api/provider/docs',
-      health: '/api/provider/health',
+      apiDocs: '/api/providers/docs',
+      health: '/api/providers/health',
       version: 'v1.0.0',
       color: '#9c27b0'
     }
@@ -525,7 +525,7 @@ const LandingPage = () => {
        │
        ▼
 ┌─────────────────────────────────────────┐
-│   API Gateway (Traefik v3 - Port 80)   │
+│   API Gateway (Traefik v3 - Port 80)    │
 │   • Service Discovery                   │
 │   • Path-Based Routing                  │
 │   • Middleware (Path Stripping)         │
@@ -565,7 +565,7 @@ External users ONLY access via API Gateway (port 80)`}
         {/* Footer */}
         <Box sx={{ textAlign: 'center', mt: 6, pt: 4, borderTop: 1, borderColor: 'divider' }}>
           <Typography variant="body2" color="text.secondary">
-            Production Readiness Score: <strong>9.9/10</strong> ⭐ • All Services Operational ✅
+            Production Ready • All Services Operational ✅
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
             Built with FastAPI • React • Traefik • Prometheus • Docker

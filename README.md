@@ -2,7 +2,7 @@
 
 > Enterprise-grade microservices architecture for industrial weight management and billing operations
 
-[![Production Ready](https://img.shields.io/badge/production-ready-brightgreen.svg)](https://github.com/ksalhab89/GanShmuel2.0)
+[![Portfolio Project](https://img.shields.io/badge/portfolio-demo--ready-brightgreen.svg)](https://github.com/ksalhab89/GanShmuel2.0)
 [![Docker](https://img.shields.io/badge/docker-compose-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.120+-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
 [![React](https://img.shields.io/badge/React-18+-61DAFB?logo=react&logoColor=black)](https://react.dev/)
@@ -32,7 +32,7 @@
 
 The Gan Shmuel Weight Management System is a comprehensive solution for managing industrial weighing operations at a juice factory. It handles truck weighing sessions, provider billing, shift management, and provider registration through a secure, scalable microservices architecture.
 
-**Production Readiness Score: 9.8/10** ⭐
+**💼 DevOps Portfolio Project** - Demonstrates production-ready patterns with one-command local setup
 
 ### Key Capabilities
 
@@ -162,7 +162,7 @@ curl http://localhost/api/shift/health
 curl http://localhost/api/provider/health
 
 # Monitoring & Operations
-open http://localhost:9999/dashboard/  # Traefik Dashboard
+open http://localhost:9999/dashboard/  # Traefik Dashboard (credentials: see below)
 open http://localhost:9090             # Prometheus
 open http://localhost:3001             # Grafana (admin/admin)
 ```
@@ -286,6 +286,8 @@ Access Grafana: **http://localhost:3001** (admin/admin)
 Monitor API Gateway routing and traffic:
 
 **http://localhost:9999/dashboard/**
+
+**Login**: Username `admin` - Password in `infrastructure/gateway/TRAEFIK_CREDENTIALS.txt`
 
 ---
 
@@ -466,26 +468,27 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-## 🎯 Roadmap
+## 🎯 DevOps Features Demonstrated
 
-### Completed ✅
-- [x] API Gateway with Traefik v3
-- [x] Rate limiting with Redis
-- [x] Security scanning automation
-- [x] Monitoring stack (Prometheus + Grafana)
-- [x] Real-time health monitoring UI
-- [x] CI/CD deployment pipeline
+### Core Features ✅
+- [x] **Microservices Architecture** - 16-container orchestration
+- [x] **API Gateway** - Traefik v3 with service discovery
+- [x] **Container Orchestration** - Docker Compose with health checks
+- [x] **Monitoring Stack** - Prometheus + Grafana with metrics
+- [x] **Security** - Rate limiting, vulnerability scanning, security headers
+- [x] **CI/CD Pipeline** - GitHub Actions with automated testing
+- [x] **Real-time Health Monitoring** - Live service status dashboard
+- [x] **One-Command Setup** - `docker-compose up -d` to start everything
 
-### In Progress 🚧
-- [ ] Alert rules for Prometheus
-- [ ] HTTPS/SSL certificates
-- [ ] Centralized logging (Loki)
+### Technical Highlights 🎯
+- **API Gateway Pattern** - Single entry point for all services
+- **Service Mesh Concepts** - Internal service communication
+- **Observability** - Metrics, health checks, dashboards
+- **Security Hardening** - Attack surface reduction, automated scanning
+- **Infrastructure as Code** - Complete docker-compose configuration
+- **Testing** - 69/69 tests passing, >90% coverage
 
-### Future 🔮
-- [ ] Distributed tracing (Jaeger)
-- [ ] Blue-green deployment
-- [ ] Auto-scaling configuration
-- [ ] Multi-region support
+> **Demo & Credentials**: See [PORTFOLIO_SHOWCASE.md](PORTFOLIO_SHOWCASE.md) for access details and system walkthrough
 
 ---
 

@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#4CAF50;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#2E7D32;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Scale base -->
+  <rect x="30" y="75" width="40" height="5" fill="url(#grad)" rx="2"/>
+
+  <!-- Scale column -->
+  <rect x="48" y="45" width="4" height="30" fill="url(#grad)"/>
+
+  <!-- Scale top bar -->
+  <rect x="20" y="40" width="60" height="5" fill="url(#grad)" rx="2"/>
+
+  <!-- Left pan -->
+  <ellipse cx="30" cy="30" rx="15" ry="5" fill="#FFB300" stroke="#F57C00" stroke-width="1.5"/>
+  <line x1="30" y1="35" x2="30" y2="40" stroke="#666" stroke-width="1.5"/>
+
+  <!-- Right pan -->
+  <ellipse cx="70" cy="30" rx="15" ry="5" fill="#FFB300" stroke="#F57C00" stroke-width="1.5"/>
+  <line x1="70" y1="35" x2="70" y2="40" stroke="#666" stroke-width="1.5"/>
+
+  <!-- Balance indicator -->
+  <circle cx="50" cy="42" r="3" fill="#FF5722"/>
+</svg>

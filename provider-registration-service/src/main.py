@@ -43,7 +43,9 @@ app = FastAPI(
     description="Provider candidate registration and approval system",
     version="1.0.0",
     lifespan=lifespan,
-    root_path="/api/provider"
+    root_path="/api/providers",
+    docs_url="/docs",
+    openapi_url="/openapi.json"
 )
 
 # Add rate limiter state to app
@@ -52,12 +54,32 @@ app.state.limiter = limiter
 # Add rate limit exceeded exception handler
 app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)
 
+# CORS configuration - environment-specific origins
+import os
+ENVIRONMENT = os.getenv("ENVIRONMENT", "development")
+
+if ENVIRONMENT == "production":
+    allowed_origins = [
+        "https://gan-shmuel.com",
+        "https://app.gan-shmuel.com",
+    ]
+elif ENVIRONMENT == "staging":
+    allowed_origins = [
+        "https://staging.gan-shmuel.com",
+    ]
+else:  # development
+    allowed_origins = [
+        "http://localhost",
+        "http://localhost:3000",
+        "http://localhost:5173",  # Vite dev server
+    ]
+
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=allowed_origins,  # SECURITY: Specific domains only
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE"],
     allow_headers=["*"],
 )
 

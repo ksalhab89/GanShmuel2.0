@@ -8,8 +8,8 @@ services:
       MYSQL_DATABASE: ${WEIGHT_DB_NAME}
       MYSQL_USER: ${WEIGHT_DB_USER}
       MYSQL_PASSWORD: ${WEIGHT_DB_PASSWORD}
-    ports:
-      - "3306:3306"
+    # ports:  # SECURITY: Port removed - access via Docker network only
+    #   - "3306:3306"
     volumes:
       - weight_db_data:/var/lib/mysql
     healthcheck:
@@ -27,7 +27,7 @@ services:
     networks:
       - gan-shmuel-network
 
-  # Billing Service Database  
+  # Billing Service Database
   billing-db:
     image: mysql:8.0
     container_name: gan-shmuel-billing-db
@@ -36,8 +36,8 @@ services:
       MYSQL_DATABASE: ${BILLING_DB_NAME}
       MYSQL_USER: ${BILLING_DB_USER}
       MYSQL_PASSWORD: ${BILLING_DB_PASSWORD}
-    ports:
-      - "3307:3306"
+    # ports:  # SECURITY: Port removed - access via Docker network only
+    #   - "3307:3306"
     volumes:
       - billing_db_data:/var/lib/mysql
       - ./billing-service/billingdb.sql:/docker-entrypoint-initdb.d/init.sql
@@ -65,8 +65,8 @@ services:
       MYSQL_DATABASE: ${SHIFT_DB_NAME}
       MYSQL_USER: ${SHIFT_DB_USER}
       MYSQL_PASSWORD: ${SHIFT_DB_PASSWORD}
-    ports:
-      - "3308:3306"
+    # ports:  # SECURITY: Port removed - access via Docker network only
+    #   - "3308:3306"
     volumes:
       - shift_db_data:/var/lib/mysql
       - ./shift-service/data/01-init-schema.sql:/docker-entrypoint-initdb.d/01-init-schema.sql
@@ -89,12 +89,13 @@ services:
   shift-redis:
     image: redis:7-alpine
     container_name: gan-shmuel-shift-redis
-    ports:
-      - "6379:6379"
+    command: redis-server --requirepass ${REDIS_PASSWORD}
+    # ports:  # SECURITY: Port removed - access via Docker network only
+    #   - "6379:6379"
     volumes:
       - shift_redis_data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
       timeout: 5s
       retries: 5
     deploy:
@@ -116,8 +117,8 @@ services:
       POSTGRES_DB: ${PROVIDER_DB_NAME}
       POSTGRES_USER: ${PROVIDER_DB_USER}
       POSTGRES_PASSWORD: ${PROVIDER_DB_PASSWORD}
-    ports:
-      - "5432:5432"
+    # ports:  # SECURITY: Port removed - access via Docker network only
+    #   - "5432:5432"
     volumes:
       - provider_db_data:/var/lib/postgresql/data
       - ./provider-registration-service/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
@@ -149,6 +150,8 @@ services:
       # Windows WSL2 + Docker Desktop: Use standard path, Docker Desktop handles it
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./infrastructure/gateway/traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./infrastructure/gateway/dynamic.yml:/etc/traefik/dynamic.yml:ro
+      - ./infrastructure/gateway/.htpasswd:/etc/traefik/.htpasswd:ro
       - traefik_logs:/var/log/traefik
     environment:
       # Explicitly set Docker endpoint for WSL2
@@ -195,7 +198,7 @@ services:
       - "traefik.http.routers.weight.entrypoints=web"
       - "traefik.http.services.weight.loadbalancer.server.port=5001"
       - "traefik.http.middlewares.weight-stripprefix.stripprefix.prefixes=/api/weight"
-      - "traefik.http.routers.weight.middlewares=weight-stripprefix"
+      - "traefik.http.routers.weight.middlewares=weight-stripprefix,security-headers@file"
     deploy:
       resources:
         limits:
@@ -238,7 +241,7 @@ services:
       - "traefik.http.routers.billing.entrypoints=web"
       - "traefik.http.services.billing.loadbalancer.server.port=5002"
       - "traefik.http.middlewares.billing-stripprefix.stripprefix.prefixes=/api/billing"
-      - "traefik.http.routers.billing.middlewares=billing-stripprefix"
+      - "traefik.http.routers.billing.middlewares=billing-stripprefix,security-headers@file"
     deploy:
       resources:
         limits:
@@ -278,7 +281,7 @@ services:
       - "traefik.http.routers.shift.entrypoints=web"
       - "traefik.http.services.shift.loadbalancer.server.port=5003"
       - "traefik.http.middlewares.shift-stripprefix.stripprefix.prefixes=/api/shift"
-      - "traefik.http.routers.shift.middlewares=shift-stripprefix"
+      - "traefik.http.routers.shift.middlewares=shift-stripprefix,security-headers@file"
     deploy:
       resources:
         limits:
@@ -314,11 +317,11 @@ services:
         condition: service_healthy
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.provider.rule=Host(`localhost`) && PathPrefix(`/api/provider`)"
+      - "traefik.http.routers.provider.rule=Host(`localhost`) && PathPrefix(`/api/providers`)"
       - "traefik.http.routers.provider.entrypoints=web"
       - "traefik.http.services.provider.loadbalancer.server.port=5004"
-      - "traefik.http.middlewares.provider-stripprefix.stripprefix.prefixes=/api/provider"
-      - "traefik.http.routers.provider.middlewares=provider-stripprefix"
+      - "traefik.http.middlewares.provider-stripprefix.stripprefix.prefixes=/api/providers"
+      - "traefik.http.routers.provider.middlewares=provider-stripprefix,security-headers@file"
     deploy:
       resources:
         limits:
@@ -391,12 +394,13 @@ services:
 
   # MySQL Exporter for Weight Service Database
   weight-mysql-exporter:
-    image: prom/mysqld-exporter:v0.15.1
+    image: prom/mysqld-exporter:v0.18.0
     container_name: gan-shmuel-weight-mysql-exporter
+    command: ["--no-collect.slave_status"]
     ports:
       - "9104:9104"
-    environment:
-      - DATA_SOURCE_NAME=${WEIGHT_DB_USER}:${WEIGHT_DB_PASSWORD}@tcp(weight-db:3306)/${WEIGHT_DB_NAME}
+    volumes:
+      - ./infrastructure/monitoring/mysql-exporters/weight-exporter.cnf:/.my.cnf:ro
     depends_on:
       weight-db:
         condition: service_healthy
@@ -406,12 +410,13 @@ services:
 
   # MySQL Exporter for Billing Service Database
   billing-mysql-exporter:
-    image: prom/mysqld-exporter:v0.15.1
+    image: prom/mysqld-exporter:v0.18.0
     container_name: gan-shmuel-billing-mysql-exporter
+    command: ["--no-collect.slave_status"]
     ports:
       - "9105:9104"
-    environment:
-      - DATA_SOURCE_NAME=${BILLING_DB_USER}:${BILLING_DB_PASSWORD}@tcp(billing-db:3306)/${BILLING_DB_NAME}
+    volumes:
+      - ./infrastructure/monitoring/mysql-exporters/billing-exporter.cnf:/.my.cnf:ro
     depends_on:
       billing-db:
         condition: service_healthy
@@ -421,12 +426,13 @@ services:
 
   # MySQL Exporter for Shift Service Database
   shift-mysql-exporter:
-    image: prom/mysqld-exporter:v0.15.1
+    image: prom/mysqld-exporter:v0.18.0
     container_name: gan-shmuel-shift-mysql-exporter
+    command: ["--no-collect.slave_status"]
     ports:
       - "9106:9104"
-    environment:
-      - DATA_SOURCE_NAME=${SHIFT_DB_USER}:${SHIFT_DB_PASSWORD}@tcp(shift-db:3306)/${SHIFT_DB_NAME}
+    volumes:
+      - ./infrastructure/monitoring/mysql-exporters/shift-exporter.cnf:/.my.cnf:ro
     depends_on:
       shift-db:
         condition: service_healthy
@@ -458,6 +464,7 @@ services:
       - "traefik.http.routers.frontend.rule=PathPrefix(`/`)"
       - "traefik.http.routers.frontend.entrypoints=web"
       - "traefik.http.services.frontend.loadbalancer.server.port=3000"
+      - "traefik.http.routers.frontend.middlewares=security-headers@file"
       # IMPORTANT: Lowest priority so API routes take precedence
       - "traefik.http.routers.frontend.priority=1"
     deploy:

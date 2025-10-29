@@ -1,4 +1,5 @@
 import logging
+import os
 from contextlib import asynccontextmanager
 from importlib.metadata import version
 from fastapi import FastAPI, Request
@@ -55,12 +56,31 @@ app = FastAPI(
     redoc_url="/redoc"
 )
 
+# CORS configuration - environment-specific origins
+ENVIRONMENT = os.getenv("ENVIRONMENT", "development")
+
+if ENVIRONMENT == "production":
+    allowed_origins = [
+        "https://gan-shmuel.com",
+        "https://app.gan-shmuel.com",
+    ]
+elif ENVIRONMENT == "staging":
+    allowed_origins = [
+        "https://staging.gan-shmuel.com",
+    ]
+else:  # development
+    allowed_origins = [
+        "http://localhost",
+        "http://localhost:3000",
+        "http://localhost:5173",  # Vite dev server
+    ]
+
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Configure appropriately for production
+    allow_origins=allowed_origins,  # SECURITY: Specific domains only
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE"],
     allow_headers=["*"],
 )
 

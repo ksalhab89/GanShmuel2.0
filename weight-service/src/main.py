@@ -1,5 +1,6 @@
 """FastAPI application entry point."""
 
+import os
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
@@ -39,7 +40,7 @@ app = FastAPI(
             "description": "Core weighing operations (IN/OUT/NONE directions)",
         },
         {
-            "name": "Batch Operations", 
+            "name": "Batch Operations",
             "description": "Batch upload of container weights from CSV/JSON files",
         },
         {
@@ -53,13 +54,32 @@ app = FastAPI(
     ],
 )
 
+# CORS configuration - environment-specific origins
+ENVIRONMENT = os.getenv("ENVIRONMENT", "development")
+
+if ENVIRONMENT == "production":
+    allowed_origins = [
+        "https://gan-shmuel.com",
+        "https://app.gan-shmuel.com",
+    ]
+elif ENVIRONMENT == "staging":
+    allowed_origins = [
+        "https://staging.gan-shmuel.com",
+    ]
+else:  # development
+    allowed_origins = [
+        "http://localhost",
+        "http://localhost:3000",
+        "http://localhost:5173",  # Vite dev server
+    ]
+
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins,
-    allow_credentials=settings.cors_credentials,
-    allow_methods=settings.cors_methods,
-    allow_headers=settings.cors_headers,
+    allow_origins=allowed_origins,  # SECURITY: Specific domains only
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "DELETE"],
+    allow_headers=["*"],
 )
 
 # Include routers

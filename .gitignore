@@ -112,3 +112,17 @@ shift-service/.env
 provider-registration-service/.env
 frontend/.env
 populate-data/.env
+
+# MySQL Exporter configuration files (contain sensitive credentials)
+infrastructure/monitoring/mysql-exporters/*.cnf
+
+# Traefik credentials (contain sensitive passwords)
+infrastructure/gateway/TRAEFIK_CREDENTIALS.txt
+infrastructure/gateway/.htpasswd
+# Backup files with credentials
+*.backup
+.env.backup
+
+# Traefik authentication
+infrastructure/gateway/.htpasswd
+infrastructure/gateway/TRAEFIK_CREDENTIALS.txt

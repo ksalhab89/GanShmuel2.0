@@ -12,7 +12,7 @@ entryPoints:
 
 api:
   dashboard: true
-  insecure: true  # Exposed on traefik entrypoint (9999)
+  insecure: false  # SECURITY: Requires authentication via middleware
 
 # Service discovery from Docker
 providers:
@@ -20,6 +20,9 @@ providers:
     endpoint: "unix:///var/run/docker.sock"
     exposedByDefault: false  # Services must opt-in with traefik.enable=true
     network: gan-shmuel-2_gan-shmuel-network  # Docker Compose prefixes with project name
+  file:
+    filename: "/etc/traefik/dynamic.yml"  # Dynamic configuration for middlewares and routes
+    watch: true
 
 # Access logs for monitoring
 accessLog:
