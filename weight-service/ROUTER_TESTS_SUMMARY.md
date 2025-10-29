@@ -496,6 +496,5 @@ The Weight Service router layer is now thoroughly tested and production-ready!
 ---
 
 **Generated**: 2025-10-26
-**Author**: Claude Code Agent
 **Test Framework**: pytest + FastAPI TestClient
 **Python Version**: 3.13

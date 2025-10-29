@@ -7,8 +7,12 @@
 .vscode/
 .idea/
 
-# Claude Code local settings (personal)
+# Local settings
 .claude/
+
+# Documentation (keep local only)
+CLAUDE.md
+**/CLAUDE.md
 
 # OS files
 .DS_Store

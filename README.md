@@ -462,7 +462,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 📞 Support
 
 - **Issues**: [GitHub Issues](https://github.com/ksalhab89/GanShmuel2.0/issues)
-- **Documentation**: See `CLAUDE.md` for detailed architecture
 - **API Docs**: Available at `/docs` endpoint for each service
 
 ---
@@ -496,7 +495,5 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 [![GitHub Stars](https://img.shields.io/github/stars/ksalhab89/GanShmuel2.0?style=social)](https://github.com/ksalhab89/GanShmuel2.0/stargazers)
 [![GitHub Forks](https://img.shields.io/github/forks/ksalhab89/GanShmuel2.0?style=social)](https://github.com/ksalhab89/GanShmuel2.0/network/members)
-
-🤖 *Generated with [Claude Code](https://claude.com/claude-code)*
 
 </div>

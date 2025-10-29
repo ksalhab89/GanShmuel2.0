@@ -571,8 +571,8 @@ External users ONLY access via API Gateway (port 80)`}
             Built with FastAPI • React • Traefik • Prometheus • Docker
           </Typography>
           <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 2 }}>
-            <MuiLink href="https://github.com/anthropics/claude-code" target="_blank" rel="noopener">
-              Documentation
+            <MuiLink href="https://github.com/ksalhab89/GanShmuel2.0" target="_blank" rel="noopener">
+              GitHub Repository
             </MuiLink>
             {' • '}
             <MuiLink href="http://localhost:9999/dashboard/" target="_blank" rel="noopener">
