@@ -37,7 +37,7 @@ jobs:
         continue-on-error: true
 
       - name: Weight Service - Upload HTML coverage
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: weight-service-coverage-html
           path: weight-service/htmlcov/
@@ -54,7 +54,7 @@ jobs:
         continue-on-error: true
 
       - name: Billing Service - Upload HTML coverage
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: billing-service-coverage-html
           path: billing-service/htmlcov/
@@ -71,7 +71,7 @@ jobs:
         continue-on-error: true
 
       - name: Shift Service - Upload HTML coverage
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: shift-service-coverage-html
           path: shift-service/htmlcov/
@@ -94,7 +94,7 @@ jobs:
         continue-on-error: true
 
       - name: Frontend - Upload HTML coverage
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: frontend-coverage-html
           path: frontend/coverage/
@@ -133,7 +133,7 @@ jobs:
           fi
 
       - name: Upload coverage summary
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: coverage-summary
           path: coverage-summary.md
