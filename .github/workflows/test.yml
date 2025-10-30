@@ -255,29 +255,77 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
+      - name: Create .env file for Docker Compose
+        run: |
+          cat > .env <<EOF
+          # Database Configuration
+          MYSQL_ROOT_PASSWORD=test_root_password
+
+          # Weight Service Database
+          WEIGHT_DB_NAME=weight_db
+          WEIGHT_DB_USER=weight_user
+          WEIGHT_DB_PASSWORD=weight_password
+
+          # Billing Service Database
+          BILLING_DB_NAME=billing_db
+          BILLING_DB_USER=billing_user
+          BILLING_DB_PASSWORD=billing_password
+
+          # Shift Service Database
+          SHIFT_DB_NAME=shift_db
+          SHIFT_DB_USER=shift_user
+          SHIFT_DB_PASSWORD=shift_password
+
+          # Redis Configuration
+          REDIS_PASSWORD=test_redis_password
+
+          # Provider Registration Service Database (PostgreSQL)
+          PROVIDER_DB_NAME=provider_db
+          PROVIDER_DB_USER=provider_user
+          PROVIDER_DB_PASSWORD=provider_password
+
+          # JWT Configuration
+          JWT_SECRET_KEY=test_jwt_secret_key_for_ci_testing_only
+          JWT_ALGORITHM=HS256
+          JWT_EXPIRATION_MINUTES=30
+          EOF
+
       - name: Start services with Docker Compose
         run: docker compose up -d
 
       - name: Wait for services via API Gateway
         run: |
           echo "Waiting for API Gateway and services to be ready..."
-          sleep 45
+          echo "Giving MySQL containers time to initialize (90 seconds)..."
+          sleep 90
 
-          # Check services via API Gateway (port 80)
-          echo "Checking weight-service via gateway..."
-          curl -f http://localhost/api/weight/health || exit 1
+          # Check services via API Gateway (port 80) with retries
+          MAX_RETRIES=10
+          RETRY_DELAY=5
 
-          echo "Checking billing-service via gateway..."
-          curl -f http://localhost/api/billing/health || exit 1
+          check_service() {
+            local service_name=$1
+            local endpoint=$2
+            echo "Checking $service_name..."
 
-          echo "Checking shift-service via gateway..."
-          curl -f http://localhost/api/shift/health || exit 1
+            for i in $(seq 1 $MAX_RETRIES); do
+              if curl -f "$endpoint"; then
+                echo "✅ $service_name is healthy"
+                return 0
+              fi
+              echo "⏳ Attempt $i/$MAX_RETRIES failed, retrying in ${RETRY_DELAY}s..."
+              sleep $RETRY_DELAY
+            done
 
-          echo "Checking provider-registration-service via gateway..."
-          curl -f http://localhost/api/provider/health || exit 1
+            echo "❌ $service_name failed to become healthy"
+            return 1
+          }
 
-          echo "Checking frontend via gateway..."
-          curl -f http://localhost/ || exit 1
+          check_service "weight-service" "http://localhost/api/weight/health" || exit 1
+          check_service "billing-service" "http://localhost/api/billing/health" || exit 1
+          check_service "shift-service" "http://localhost/api/shift/health" || exit 1
+          check_service "provider-registration-service" "http://localhost/api/provider/health" || exit 1
+          check_service "frontend" "http://localhost/" || exit 1
 
           echo "✅ All services healthy via API Gateway"
 
