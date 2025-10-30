@@ -246,16 +246,25 @@ class TransactionResponse(BaseModel):
 
 class ItemResponse(BaseModel):
     """Schema for item query responses."""
-    
+
     id: str = Field(..., description="Item identifier")
+    item_id: Optional[str] = Field(default=None, description="Item identifier (alias for id)")
+    item_type: Optional[str] = Field(default=None, description="Type of item (truck or container)")
     tara: Union[int, str] = Field(..., description="Tare weight or 'na'")
     sessions: List[str] = Field(..., description="Session UUIDs")
+
+    def __init__(self, **data):
+        # Set item_id to id if not provided
+        if 'item_id' not in data or data['item_id'] is None:
+            data['item_id'] = data.get('id')
+        super().__init__(**data)
 
 
 class SessionResponse(BaseModel):
     """Schema for session query responses."""
-    
+
     id: str = Field(..., description="Session UUID")
+    session_id: Optional[str] = Field(default=None, description="Session UUID (alias for id)")
     truck: str = Field(..., description="Truck license or 'na'")
     bruto: int = Field(..., description="Gross weight in kg")
     truck_tara: Optional[int] = Field(
@@ -264,6 +273,12 @@ class SessionResponse(BaseModel):
     neto: Optional[Union[int, str]] = Field(
         default=None, description="Net weight or 'na'"
     )
+
+    def __init__(self, **data):
+        # Set session_id to id if not provided
+        if 'session_id' not in data or data['session_id'] is None:
+            data['session_id'] = data.get('id')
+        super().__init__(**data)
 
 
 class HealthResponse(BaseModel):

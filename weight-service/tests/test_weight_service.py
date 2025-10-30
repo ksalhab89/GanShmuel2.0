@@ -67,7 +67,7 @@ class TestWeightService:
         assert response.truck == "ABC123"
         assert response.bruto == 5000
         assert response.truck_tara is None
-        assert response.neto is None
+        assert response.neto == "na"  # IN direction doesn't have net weight yet
         
         # Verify transaction was created
         weight_service.transaction_repo.create.assert_called_once()

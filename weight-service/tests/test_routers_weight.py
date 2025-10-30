@@ -34,7 +34,7 @@ class TestWeightRecordingRouter:
         assert data["truck"] == "TEST_TRUCK_001"
         assert data["gross_weight"] == 5000
         assert "session_id" in data
-        assert data["net_weight"] is None
+        assert data["net_weight"] == "na"  # IN direction doesn't have net weight yet
 
     def test_post_weight_out_direction_success(self, client):
         """Test successful OUT weighing completes existing session."""

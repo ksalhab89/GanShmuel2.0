@@ -9,6 +9,7 @@ from ..models.database import Transaction
 from ..models.repositories import ContainerRepository, TransactionRepository
 from ..models.schemas import ItemResponse, TransactionResponse, WeightQueryParams, ItemQueryParams
 from ..utils.datetime_utils import parse_datetime_string
+from ..utils.exceptions import InvalidDateRangeError
 from .container_service import ContainerService
 from .session_service import SessionService
 
@@ -36,13 +37,17 @@ class QueryService:
         # Parse time range
         from_time = None
         to_time = None
-        
+
         if params.from_time:
             from_time = parse_datetime_string(params.from_time)
-        
+
         if params.to_time:
             to_time = parse_datetime_string(params.to_time)
-        
+
+        # Validate date range
+        if from_time and to_time and from_time > to_time:
+            raise InvalidDateRangeError("From date cannot be after To date")
+
         # Parse direction filter
         directions = [d.strip() for d in params.filter.split(',') if d.strip()]
         
@@ -166,6 +171,7 @@ class QueryService:
         
         return ItemResponse(
             id=truck_id,
+            item_type="truck",
             tara=avg_tara,
             sessions=session_ids
         )
@@ -206,6 +212,7 @@ class QueryService:
         
         return ItemResponse(
             id=container_id,
+            item_type="container",
             tara=tara,
             sessions=session_ids
         )
@@ -260,6 +267,7 @@ class QueryService:
         
         return ItemResponse(
             id=item_id,
+            item_type=item_type,
             tara=last_tare_weight,
             sessions=sessions
         )

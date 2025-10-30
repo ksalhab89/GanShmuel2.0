@@ -146,8 +146,8 @@ class WeightService:
             bruto=bruto_kg,
             gross_weight=bruto_kg,
             truck_tara=None,
-            neto=None,
-            net_weight=None
+            neto="na",  # IN transactions don't have net weight yet
+            net_weight="na"
         ), None
     
     async def _handle_out_direction(self, request: WeightRequest, container_ids: List[str]) -> Tuple[WeightResponse, Optional[str]]:
