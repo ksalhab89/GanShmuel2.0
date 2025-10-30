@@ -449,3 +449,207 @@ class TestQueryRouter:
 
         data = response.json()
         assert isinstance(data, list)
+
+
+class TestQueryRouterExceptionHandlers:
+    """Test suite for query router exception handling."""
+
+    def test_query_weighings_invalid_date_range_error(self):
+        """Test that InvalidDateRangeError returns 400 with proper message."""
+        from unittest.mock import AsyncMock
+        from src.main import app
+        from src.dependencies import get_query_service
+        from src.utils.exceptions import InvalidDateRangeError
+
+        # Mock query_service to raise InvalidDateRangeError
+        mock_service = AsyncMock()
+        async def mock_query_transactions(params):
+            raise InvalidDateRangeError("Start date must be before end date")
+        mock_service.query_transactions = mock_query_transactions
+
+        # Override dependency
+        app.dependency_overrides[get_query_service] = lambda: mock_service
+
+        try:
+            client = TestClient(app)
+            response = client.get("/weight?from=20241201000000&to=20241130000000")
+
+            assert response.status_code == 400
+            assert "Invalid date range" in response.json()["detail"]
+            assert "Start date must be before end date" in response.json()["detail"]
+        finally:
+            app.dependency_overrides.clear()
+
+    def test_query_weighings_value_error(self):
+        """Test that ValueError returns 400 with proper message."""
+        from unittest.mock import AsyncMock
+        from src.main import app
+        from src.dependencies import get_query_service
+
+        # Mock query_service to raise ValueError
+        mock_service = AsyncMock()
+        async def mock_query_transactions(params):
+            raise ValueError("Invalid date format in query")
+        mock_service.query_transactions = mock_query_transactions
+
+        # Override dependency
+        app.dependency_overrides[get_query_service] = lambda: mock_service
+
+        try:
+            client = TestClient(app)
+            response = client.get("/weight")
+
+            assert response.status_code == 400
+            assert "Invalid query parameters" in response.json()["detail"]
+            assert "date format" in response.json()["detail"]
+        finally:
+            app.dependency_overrides.clear()
+
+    def test_query_weighings_generic_exception(self):
+        """Test that generic Exception returns 500 with proper message."""
+        from unittest.mock import AsyncMock
+        from src.main import app
+        from src.dependencies import get_query_service
+
+        # Mock query_service to raise generic Exception
+        mock_service = AsyncMock()
+        async def mock_query_transactions(params):
+            raise Exception("Database query timeout")
+        mock_service.query_transactions = mock_query_transactions
+
+        # Override dependency
+        app.dependency_overrides[get_query_service] = lambda: mock_service
+
+        try:
+            client = TestClient(app)
+            response = client.get("/weight")
+
+            assert response.status_code == 500
+            assert "Internal server error" in response.json()["detail"]
+            assert "Database query timeout" in response.json()["detail"]
+        finally:
+            app.dependency_overrides.clear()
+
+    def test_get_item_invalid_date_range_error(self):
+        """Test that InvalidDateRangeError in item query returns 400."""
+        from unittest.mock import AsyncMock
+        from src.main import app
+        from src.dependencies import get_query_service
+        from src.utils.exceptions import InvalidDateRangeError
+
+        # Mock query_service to raise InvalidDateRangeError
+        mock_service = AsyncMock()
+        async def mock_get_item_info(item_id, from_datetime, to_datetime):
+            raise InvalidDateRangeError("Invalid date format")
+        mock_service.get_item_info = mock_get_item_info
+
+        # Override dependency
+        app.dependency_overrides[get_query_service] = lambda: mock_service
+
+        try:
+            client = TestClient(app)
+            response = client.get("/item/TRUCK123?from=invalid")
+
+            assert response.status_code == 400
+            assert "Invalid date range" in response.json()["detail"]
+        finally:
+            app.dependency_overrides.clear()
+
+    def test_get_item_generic_exception(self):
+        """Test that generic Exception in item query returns 500."""
+        from unittest.mock import AsyncMock
+        from src.main import app
+        from src.dependencies import get_query_service
+
+        # Mock query_service to raise generic Exception
+        mock_service = AsyncMock()
+        async def mock_get_item_info(item_id, from_datetime, to_datetime):
+            raise Exception("Database connection lost")
+        mock_service.get_item_info = mock_get_item_info
+
+        # Override dependency
+        app.dependency_overrides[get_query_service] = lambda: mock_service
+
+        try:
+            client = TestClient(app)
+            response = client.get("/item/TRUCK123")
+
+            assert response.status_code == 500
+            assert "Internal server error" in response.json()["detail"]
+            assert "Database connection lost" in response.json()["detail"]
+        finally:
+            app.dependency_overrides.clear()
+
+    def test_get_session_value_error(self):
+        """Test that ValueError in session query returns 400."""
+        from unittest.mock import AsyncMock
+        from src.main import app
+        from src.dependencies import get_session_service
+
+        # Mock session_service to raise ValueError
+        mock_service = AsyncMock()
+        async def mock_get_session_response(session_id):
+            raise ValueError("Invalid UUID format")
+        mock_service.get_session_response = mock_get_session_response
+
+        # Override dependency
+        app.dependency_overrides[get_session_service] = lambda: mock_service
+
+        try:
+            client = TestClient(app)
+            response = client.get("/session/invalid-uuid")
+
+            assert response.status_code == 400
+            assert "Invalid session ID format" in response.json()["detail"]
+        finally:
+            app.dependency_overrides.clear()
+
+    def test_get_session_generic_exception(self):
+        """Test that generic Exception in session query returns 500."""
+        from unittest.mock import AsyncMock
+        from src.main import app
+        from src.dependencies import get_session_service
+
+        # Mock session_service to raise generic Exception
+        mock_service = AsyncMock()
+        async def mock_get_session_response(session_id):
+            raise Exception("Session lookup failed")
+        mock_service.get_session_response = mock_get_session_response
+
+        # Override dependency
+        app.dependency_overrides[get_session_service] = lambda: mock_service
+
+        try:
+            client = TestClient(app)
+            response = client.get("/session/12345678-1234-1234-1234-123456789abc")
+
+            assert response.status_code == 500
+            assert "Internal server error" in response.json()["detail"]
+            assert "Session lookup failed" in response.json()["detail"]
+        finally:
+            app.dependency_overrides.clear()
+
+    def test_list_unknown_containers_generic_exception(self):
+        """Test that generic Exception in unknown containers returns 500."""
+        from unittest.mock import AsyncMock
+        from src.main import app
+        from src.dependencies import get_container_service
+
+        # Mock container_service to raise generic Exception
+        mock_service = AsyncMock()
+        async def mock_find_unknown_containers():
+            raise Exception("Container scan failed")
+        mock_service.find_unknown_containers = mock_find_unknown_containers
+
+        # Override dependency
+        app.dependency_overrides[get_container_service] = lambda: mock_service
+
+        try:
+            client = TestClient(app)
+            response = client.get("/unknown")
+
+            assert response.status_code == 500
+            assert "Internal server error" in response.json()["detail"]
+            assert "Container scan failed" in response.json()["detail"]
+        finally:
+            app.dependency_overrides.clear()
