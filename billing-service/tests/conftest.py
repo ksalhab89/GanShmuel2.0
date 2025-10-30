@@ -20,10 +20,46 @@ from src.models.database import Provider, Rate, Truck
 from src.models.repositories import ProviderRepository, RateRepository, TruckRepository
 
 
+async def create_schema():
+    """Create database schema for tests."""
+    # Create Provider table
+    await execute_query("""
+        CREATE TABLE IF NOT EXISTS `Provider` (
+          `id` int(11) NOT NULL AUTO_INCREMENT,
+          `name` varchar(255) DEFAULT NULL,
+          PRIMARY KEY (`id`)
+        ) ENGINE=MyISAM AUTO_INCREMENT=10001
+    """)
+
+    # Create Rates table
+    await execute_query("""
+        CREATE TABLE IF NOT EXISTS `Rates` (
+          `product_id` varchar(50) NOT NULL,
+          `rate` int(11) DEFAULT 0,
+          `scope` varchar(50) DEFAULT NULL
+        ) ENGINE=MyISAM
+    """)
+
+    # Create Trucks table
+    await execute_query("""
+        CREATE TABLE IF NOT EXISTS `Trucks` (
+          `id` varchar(10) NOT NULL,
+          `provider_id` int(11) DEFAULT NULL,
+          PRIMARY KEY (`id`)
+        ) ENGINE=MyISAM
+    """)
+
+
 @pytest.fixture(scope="session", autouse=True)
 def setup_database():
-    """Initialize database pool for all tests."""
+    """Initialize database pool and create schema for all tests."""
+    import asyncio
+
     initialize_pool()
+
+    # Create schema synchronously in session setup
+    asyncio.run(create_schema())
+
     yield
 
 
