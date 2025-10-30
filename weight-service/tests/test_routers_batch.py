@@ -4,6 +4,43 @@ import pytest
 from fastapi.testclient import TestClient
 
 
+class TestBatchRouterSuccess:
+    """Test suite for successful batch upload operations."""
+
+    def test_successful_batch_upload(self):
+        """Test successful batch file processing."""
+        from unittest.mock import AsyncMock
+        from src.main import app
+        from src.dependencies import get_file_service
+
+        # Mock file_service to return success response
+        mock_service = AsyncMock()
+        async def mock_process_batch_file(filename):
+            return {
+                "message": "File processed successfully",
+                "processed_count": 10,
+                "skipped_count": 0,
+                "errors": []
+            }
+        mock_service.process_batch_file = mock_process_batch_file
+
+        # Override dependency
+        app.dependency_overrides[get_file_service] = lambda: mock_service
+
+        try:
+            client = TestClient(app)
+            payload = {"file": "containers.csv"}
+
+            response = client.post("/batch-weight", json=payload)
+
+            assert response.status_code == 200
+            assert response.json()["message"] == "File processed successfully"
+            assert response.json()["processed_count"] == 10
+            assert response.json()["skipped_count"] == 0
+        finally:
+            app.dependency_overrides.clear()
+
+
 class TestBatchRouterExceptionHandlers:
     """Test suite for batch router exception handling."""
 

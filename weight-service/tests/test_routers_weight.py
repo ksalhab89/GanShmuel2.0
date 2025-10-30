@@ -500,6 +500,54 @@ class TestWeightRecordingRouter:
         assert response.status_code == 422
 
 
+class TestWeightRouterSuccessPath:
+    """Test suite for successful weight recording."""
+
+    def test_successful_weight_recording(self):
+        """Test successful weight recording returns result."""
+        from unittest.mock import AsyncMock
+        from src.main import app
+        from src.dependencies import get_weight_service
+
+        # Mock weight_service to return success response
+        mock_service = AsyncMock()
+        async def mock_record_weight(request):
+            return {
+                "id": "test-session-uuid-123",
+                "session_id": "test-session-uuid-123",
+                "direction": request.direction,
+                "truck": request.truck,
+                "bruto": request.weight,
+                "gross_weight": request.weight,
+                "neto": "na",
+                "net_weight": "na"
+            }, None
+        mock_service.record_weight = mock_record_weight
+
+        # Override dependency
+        app.dependency_overrides[get_weight_service] = lambda: mock_service
+
+        try:
+            client = TestClient(app)
+            payload = {
+                "direction": "in",
+                "truck": "TEST_TRUCK_001",
+                "containers": "C001,C002",
+                "weight": 5000,
+                "unit": "kg"
+            }
+
+            response = client.post("/weight", json=payload)
+
+            assert response.status_code == 200
+            assert response.json()["id"] == "test-session-uuid-123"
+            assert response.json()["truck"] == "TEST_TRUCK_001"
+            assert response.json()["direction"] == "in"
+            assert response.json()["gross_weight"] == 5000
+        finally:
+            app.dependency_overrides.clear()
+
+
 class TestWeightRouterExceptionHandlers:
     """Test suite for router exception handling."""
 
