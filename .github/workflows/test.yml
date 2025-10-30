@@ -47,21 +47,19 @@ jobs:
           python-version: '3.11'
 
       - name: Install UV
-        run: curl -LsSf https://astral.sh/uv/install.sh | sh
-
-      - name: Add UV to PATH
-        run: echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+        uses: astral-sh/setup-uv@d80a13826f7b6f1b8526d0c058a5c799deb3d8e6 # v4.3.0
+        with:
+          version: "0.5.20"
+          enable-cache: true
 
       - name: Install dependencies
         run: uv sync --dev
 
       - name: Run type checking
         run: uv run mypy src
-        continue-on-error: true  # TODO: Fix type errors and remove this
 
       - name: Run linting
         run: uv run ruff check src
-        continue-on-error: true  # Linting warnings shouldn't block pipeline
 
       - name: Run tests with coverage
         env:
@@ -105,29 +103,25 @@ jobs:
           python-version: '3.11'
 
       - name: Install UV
-        run: curl -LsSf https://astral.sh/uv/install.sh | sh
-
-      - name: Add UV to PATH
-        run: echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+        uses: astral-sh/setup-uv@d80a13826f7b6f1b8526d0c058a5c799deb3d8e6 # v4.3.0
+        with:
+          version: "0.5.20"
+          enable-cache: true
 
       - name: Install dependencies
         run: uv sync --dev
 
       - name: Run type checking
         run: uv run mypy src
-        continue-on-error: true  # TODO: Fix type errors and remove this
 
       - name: Run linting
         run: uv run flake8 src tests
-        continue-on-error: true  # Linting warnings shouldn't block pipeline
 
       - name: Check code formatting
         run: uv run black --check src tests
-        continue-on-error: true  # Formatting warnings shouldn't block pipeline
 
       - name: Check import sorting
         run: uv run isort --check-only src tests
-        continue-on-error: true  # Import sorting warnings shouldn't block pipeline
 
       - name: Run tests with coverage
         env:
@@ -181,33 +175,25 @@ jobs:
           python-version: '3.11'
 
       - name: Install UV
-        run: curl -LsSf https://astral.sh/uv/install.sh | sh
-
-      - name: Add UV to PATH
-        run: echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+        uses: astral-sh/setup-uv@d80a13826f7b6f1b8526d0c058a5c799deb3d8e6 # v4.3.0
+        with:
+          version: "0.5.20"
+          enable-cache: true
 
       - name: Install dependencies
         run: uv sync --dev
 
       - name: Run type checking
         run: uv run mypy src
-        continue-on-error: true  # TODO: Fix type errors and remove this
 
       - name: Run linting
         run: uv run ruff check src
-        continue-on-error: true  # Linting warnings shouldn't block pipeline
 
       - name: Run tests with coverage
         env:
           DB_URL: mysql+aiomysql://root:root@127.0.0.1:3308/test_shift_db
           REDIS_URL: redis://127.0.0.1:6379
-        run: |
-          if [ -d "tests" ]; then
-            uv run pytest tests/ -v --cov=src --cov-report=xml --cov-report=term --cov-fail-under=80
-          else
-            echo "⚠️ No tests directory found - skipping tests for now"
-            exit 0
-          fi
+        run: uv run pytest tests/ -v --cov=src --cov-report=xml --cov-report=term --cov-fail-under=80
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7 # v5
@@ -238,11 +224,9 @@ jobs:
 
       - name: Run type checking
         run: npm run type-check
-        continue-on-error: true  # Type warnings shouldn't block pipeline
 
       - name: Run linting
         run: npm run lint
-        continue-on-error: true  # Linting warnings shouldn't block pipeline
 
       - name: Run tests with coverage
         run: npm run test:coverage
@@ -267,6 +251,9 @@ jobs:
 
       - name: Create .env file for Docker Compose
         run: |
+          # NOTE: Hardcoded test credentials are acceptable for CI environments
+          # These are ephemeral test databases destroyed after each run
+          # Production deployments must use GitHub Secrets or secure credential management
           cat > .env <<EOF
           # MySQL Root Password
           MYSQL_ROOT_PASSWORD=test_root_password
@@ -328,11 +315,10 @@ jobs:
       - name: Wait for services via API Gateway
         run: |
           echo "Waiting for API Gateway and services to be ready..."
-          echo "Giving MySQL containers time to initialize (90 seconds)..."
-          sleep 90
 
-          # Check services via API Gateway (port 80) with retries
-          MAX_RETRIES=10
+          # Poll services via API Gateway (port 80) with retries
+          # MySQL initialization is handled by health check retries
+          MAX_RETRIES=30
           RETRY_DELAY=5
 
           check_service() {
@@ -373,10 +359,10 @@ jobs:
           python-version: '3.11'
 
       - name: Install UV
-        run: curl -LsSf https://astral.sh/uv/install.sh | sh
-
-      - name: Add UV to PATH
-        run: echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+        uses: astral-sh/setup-uv@d80a13826f7b6f1b8526d0c058a5c799deb3d8e6 # v4.3.0
+        with:
+          version: "0.5.20"
+          enable-cache: true
 
       - name: Install weight-service test dependencies
         working-directory: weight-service

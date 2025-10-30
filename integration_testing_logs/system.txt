@@ -1,5 +1,0 @@
-2025-10-30T13:49:49.9980000Z Requested labels: ubuntu-latest
-2025-10-30T13:49:49.9980000Z Job defined at: ksalhab89/GanShmuel2.0/.github/workflows/test.yml@refs/heads/main
-2025-10-30T13:49:49.9980000Z Waiting for a runner to pick up this job...
-2025-10-30T13:49:50.0000000Z Job is waiting for a hosted runner to come online.
-2025-10-30T13:49:50.0000000Z Job is about to start running on the hosted runner: GitHub Actions 1000001403
