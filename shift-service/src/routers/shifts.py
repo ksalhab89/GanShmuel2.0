@@ -3,7 +3,8 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import text
-from typing import Optional
+from sqlalchemy.engine import CursorResult
+from typing import Optional, cast
 
 from ..database import get_db
 from ..models.schemas import (
@@ -27,20 +28,23 @@ async def create_operator(operator: OperatorCreate, db: Session = Depends(get_db
         VALUES (:name, :employee_id, :role, TRUE, NOW())
     """)
     try:
-        result = db.execute(
+        result = cast(CursorResult, db.execute(
             query,
             {
                 "name": operator.name,
                 "employee_id": operator.employee_id,
                 "role": operator.role,
             },
-        )
+        ))
         db.commit()
         operator_id = result.lastrowid
 
         # Fetch the created operator
         select_query = text("SELECT * FROM operators WHERE id = :id")
         row = db.execute(select_query, {"id": operator_id}).fetchone()
+
+        if not row:
+            raise HTTPException(status_code=500, detail="Failed to fetch created operator")
 
         return OperatorResponse(
             id=row.id,
@@ -110,16 +114,19 @@ async def start_shift(shift: ShiftStart, db: Session = Depends(get_db)):
         VALUES (:operator_id, :shift_type, NOW(), 0)
     """)
     try:
-        result = db.execute(
+        result = cast(CursorResult, db.execute(
             insert_query,
             {"operator_id": shift.operator_id, "shift_type": shift.shift_type},
-        )
+        ))
         db.commit()
         shift_id = result.lastrowid
 
         # Fetch the created shift
         select_query = text("SELECT * FROM shifts WHERE id = :id")
         row = db.execute(select_query, {"id": shift_id}).fetchone()
+
+        if not row:
+            raise HTTPException(status_code=500, detail="Failed to fetch created shift")
 
         return ShiftResponse(
             id=row.id,
@@ -171,6 +178,9 @@ async def end_shift(
         select_query = text("SELECT * FROM shifts WHERE id = :id")
         row = db.execute(select_query, {"id": shift_id}).fetchone()
 
+        if not row:
+            raise HTTPException(status_code=500, detail="Failed to fetch updated shift")
+
         return ShiftResponse(
             id=row.id,
             operator_id=row.operator_id,
@@ -209,7 +219,7 @@ async def list_shifts(
 
     # Get total count
     count_query = text(f"SELECT COUNT(*) FROM shifts {where_clause}")
-    total = db.execute(count_query, params).scalar()
+    total = db.execute(count_query, params).scalar() or 0
 
     # Get paginated results
     query = text(f"""
