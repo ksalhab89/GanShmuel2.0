@@ -2,14 +2,12 @@
 
 > Enterprise-grade microservices architecture for industrial weight management and billing operations
 
-<!-- CI cache test run -->
-
 [![Portfolio Project](https://img.shields.io/badge/portfolio-demo--ready-brightgreen.svg)](https://github.com/ksalhab89/GanShmuel2.0)
+[![CI/CD](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions-2088FF?logo=github-actions&logoColor=white)](https://github.com/ksalhab89/GanShmuel2.0/actions)
 [![Docker](https://img.shields.io/badge/docker-compose-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.120+-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
 [![React](https://img.shields.io/badge/React-18+-61DAFB?logo=react&logoColor=black)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5+-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 ---
 
@@ -61,10 +59,11 @@ The Gan Shmuel Weight Management System is a comprehensive solution for managing
 - 🌐 **API Gateway** - Traefik v3 with automatic service discovery
 - 🛡️ **Rate Limiting** - Redis-backed DDoS protection
 - 📈 **Monitoring Stack** - Prometheus + Grafana with 200h retention
-- 🔐 **Security Scanning** - Automated Trivy, pip-audit, TruffleHog scans
-- 🚀 **CI/CD Pipeline** - GitHub Actions deployment automation
+- 🔐 **Security Scanning** - Trivy v0.33.1, TruffleHog v3.90.11, GitGuardian v1.37.0
+- 🚀 **CI/CD Pipeline** - Production-grade GitHub Actions with quality gates
 - 🐳 **Container Registry** - GitHub Container Registry (ghcr.io)
 - 📊 **Metrics & Alerts** - Business and infrastructure metrics
+- 🔧 **Reproducible Builds** - UV package manager with version pinning
 
 ---
 
@@ -174,21 +173,23 @@ open http://localhost:3001             # Grafana (admin/admin)
 ## 🛠️ Technology Stack
 
 ### Backend Services
-- **Framework**: FastAPI (Python 3.13)
+- **Framework**: FastAPI (Python 3.11)
+- **Package Manager**: UV (pinned v0.5.20)
 - **Databases**: MySQL 8.0, PostgreSQL 15, Redis 7
 - **ORM**: SQLAlchemy 2.0 with async support
 - **Migrations**: Alembic
-- **Testing**: pytest with pytest-asyncio
+- **Testing**: pytest with pytest-asyncio, >90% coverage
 - **Validation**: Pydantic v2
 - **Rate Limiting**: SlowAPI + Redis
 
 ### Infrastructure
 - **API Gateway**: Traefik v3.0
-- **Containerization**: Docker & Docker Compose
+- **Containerization**: Docker & Docker Compose (18 services)
 - **Monitoring**: Prometheus + Grafana
-- **Security Scanning**: Trivy, pip-audit, Safety, TruffleHog
-- **CI/CD**: GitHub Actions
+- **Security Scanning**: Trivy v0.33.1, TruffleHog v3.90.11, GitGuardian v1.37.0
+- **CI/CD**: GitHub Actions (production-grade workflows with quality gates)
 - **Container Registry**: GitHub Container Registry (ghcr.io)
+- **Package Manager**: UV with version pinning for reproducible builds
 
 ### Frontend
 - **Framework**: React 18 with TypeScript
@@ -473,14 +474,22 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 🎯 DevOps Features Demonstrated
 
 ### Core Features ✅
-- [x] **Microservices Architecture** - 16-container orchestration
+- [x] **Microservices Architecture** - 18-container orchestration
 - [x] **API Gateway** - Traefik v3 with service discovery
 - [x] **Container Orchestration** - Docker Compose with health checks
 - [x] **Monitoring Stack** - Prometheus + Grafana with metrics
 - [x] **Security** - Rate limiting, vulnerability scanning, security headers
-- [x] **CI/CD Pipeline** - GitHub Actions with automated testing
+- [x] **CI/CD Pipeline** - Production-grade GitHub Actions workflows
 - [x] **Real-time Health Monitoring** - Live service status dashboard
 - [x] **One-Command Setup** - `docker-compose up -d` to start everything
+
+### CI/CD Pipeline Quality 🚀
+- **Code Quality Gates** - Type checking, linting, formatting enforced
+- **Security Scanning** - Trivy, TruffleHog, GitGuardian with pinned versions
+- **Test Coverage** - >90% coverage requirement, 69/69 tests passing
+- **Dependency Pinning** - UV v0.5.20 for reproducible builds
+- **Optimized Startup** - Health check polling instead of arbitrary waits
+- **Build Caching** - Docker layer caching for faster CI runs
 
 ### Technical Highlights 🎯
 - **API Gateway Pattern** - Single entry point for all services
