@@ -225,16 +225,23 @@ class BatchUploadResponse(BaseModel):
 
 class TransactionResponse(BaseModel):
     """Schema for transaction query responses."""
-    
+
     id: str = Field(..., description="Session UUID")
     direction: str = Field(..., description="Weighing direction")
     truck: Optional[str] = Field(default=None, description="Truck license plate")
     bruto: int = Field(..., description="Gross weight in kg")
+    gross_weight: Optional[int] = Field(default=None, description="Gross weight in kg (alias for bruto)")
     neto: Optional[Union[int, str]] = Field(
         default=None, description="Net weight or 'na'"
     )
     produce: str = Field(..., description="Produce type")
     containers: List[str] = Field(..., description="Container IDs")
+
+    def __init__(self, **data):
+        # Set gross_weight to bruto if not provided
+        if 'gross_weight' not in data or data['gross_weight'] is None:
+            data['gross_weight'] = data.get('bruto')
+        super().__init__(**data)
 
 
 class ItemResponse(BaseModel):

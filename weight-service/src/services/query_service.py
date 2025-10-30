@@ -445,6 +445,7 @@ class QueryService:
             direction=transaction.direction,
             truck=transaction.truck,
             bruto=transaction.bruto,
+            gross_weight=transaction.bruto,
             neto=transaction.neto if transaction.neto is not None else "na",
             produce=transaction.get_display_produce(),
             containers=transaction.container_list
