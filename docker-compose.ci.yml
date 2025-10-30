@@ -1,0 +1,38 @@
+# Docker Compose override for CI/CD environments
+# This file removes init SQL scripts that may cause issues in CI
+# and reduces resource limits for GitHub Actions runners
+
+services:
+  billing-db:
+    volumes:
+      # Remove the init SQL file - tests will create their own data
+      - billing_db_data:/var/lib/mysql
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+
+  shift-db:
+    volumes:
+      # Remove the init SQL file - tests will create their own data
+      - shift_db_data:/var/lib/mysql
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+
+  weight-db:
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+
+  provider-db:
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
