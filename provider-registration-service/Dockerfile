@@ -1,5 +1,5 @@
 # Multi-stage build for FastAPI provider registration service with uv
-FROM python:3.13-slim AS builder
+FROM python:3.14-slim AS builder
 
 # Install uv
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
@@ -14,7 +14,7 @@ COPY pyproject.toml ./
 RUN uv sync --no-cache --no-dev
 
 # Production stage
-FROM python:3.13-slim
+FROM python:3.14-slim
 
 # Install uv
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
