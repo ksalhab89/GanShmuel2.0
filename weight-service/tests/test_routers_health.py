@@ -101,3 +101,33 @@ class TestHealthRouter:
         assert response.status_code == 200
         # Should respond in under 1 second
         assert duration < 1.0
+
+    def test_health_check_database_failure(self):
+        """Test health check returns degraded status when database fails."""
+        from unittest.mock import AsyncMock
+        from src.main import app
+        from src.dependencies import get_db
+
+        # Mock database session to raise exception
+        async def mock_db_fail():
+            mock_db = AsyncMock()
+            async def raise_exception(*args, **kwargs):
+                raise Exception("Database connection failed")
+            mock_db.execute = raise_exception
+            yield mock_db
+
+        # Override database dependency
+        app.dependency_overrides[get_db] = mock_db_fail
+
+        try:
+            client = TestClient(app)
+            response = client.get("/health")
+
+            assert response.status_code == 200
+            data = response.json()
+            assert data["status"] == "degraded"
+            assert data["database"] == "unhealthy"
+            assert data["service"] == "weight-service"
+            assert "version" in data
+        finally:
+            app.dependency_overrides.clear()

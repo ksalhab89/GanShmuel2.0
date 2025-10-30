@@ -498,3 +498,142 @@ class TestWeightRecordingRouter:
         response = client.post("/weight", json=payload)
         # Should fail - direction is case-sensitive
         assert response.status_code == 422
+
+
+class TestWeightRouterExceptionHandlers:
+    """Test suite for router exception handling."""
+
+    def test_weighing_sequence_error_handling(self):
+        """Test that WeighingSequenceError returns 400 with proper message."""
+        from unittest.mock import AsyncMock
+        from src.utils.exceptions import WeighingSequenceError
+        from src.main import app
+        from src.dependencies import get_weight_service
+
+        # Mock weight_service to raise WeighingSequenceError
+        mock_service = AsyncMock()
+        async def mock_record_weight(request):
+            raise WeighingSequenceError("OUT weighing without matching IN transaction")
+        mock_service.record_weight = mock_record_weight
+
+        # Override dependency
+        app.dependency_overrides[get_weight_service] = lambda: mock_service
+
+        try:
+            client = TestClient(app)
+            payload = {
+                "direction": "out",
+                "truck": "ERROR_TEST_001",
+                "containers": "C001",
+                "weight": 4000,
+                "unit": "kg"
+            }
+
+            response = client.post("/weight", json=payload)
+
+            assert response.status_code == 400
+            assert "Invalid weighing sequence" in response.json()["detail"]
+            assert "OUT weighing without matching IN transaction" in response.json()["detail"]
+        finally:
+            app.dependency_overrides.clear()
+
+    def test_container_not_found_error_handling(self):
+        """Test that ContainerNotFoundError returns 400 with proper message."""
+        from unittest.mock import AsyncMock
+        from src.utils.exceptions import ContainerNotFoundError
+        from src.main import app
+        from src.dependencies import get_weight_service
+
+        # Mock weight_service to raise ContainerNotFoundError
+        mock_service = AsyncMock()
+        async def mock_record_weight(request):
+            raise ContainerNotFoundError("Container C999 not found in database")
+        mock_service.record_weight = mock_record_weight
+
+        # Override dependency
+        app.dependency_overrides[get_weight_service] = lambda: mock_service
+
+        try:
+            client = TestClient(app)
+            payload = {
+                "direction": "in",
+                "truck": "ERROR_TEST_002",
+                "containers": "C999",
+                "weight": 5000,
+                "unit": "kg"
+            }
+
+            response = client.post("/weight", json=payload)
+
+            assert response.status_code == 400
+            assert "Container not found" in response.json()["detail"]
+            assert "C999" in response.json()["detail"]
+        finally:
+            app.dependency_overrides.clear()
+
+    def test_invalid_weight_error_handling(self):
+        """Test that InvalidWeightError returns 400 with proper message."""
+        from unittest.mock import AsyncMock
+        from src.utils.exceptions import InvalidWeightError
+        from src.main import app
+        from src.dependencies import get_weight_service
+
+        # Mock weight_service to raise InvalidWeightError
+        mock_service = AsyncMock()
+        async def mock_record_weight(request):
+            raise InvalidWeightError("Weight value 200000 kg exceeds maximum allowed")
+        mock_service.record_weight = mock_record_weight
+
+        # Override dependency
+        app.dependency_overrides[get_weight_service] = lambda: mock_service
+
+        try:
+            client = TestClient(app)
+            payload = {
+                "direction": "in",
+                "truck": "ERROR_TEST_003",
+                "containers": "C001",
+                "weight": 200000,
+                "unit": "kg"
+            }
+
+            response = client.post("/weight", json=payload)
+
+            assert response.status_code == 400
+            assert "Invalid weight value" in response.json()["detail"]
+            assert "200000" in response.json()["detail"]
+        finally:
+            app.dependency_overrides.clear()
+
+    def test_generic_exception_handling(self):
+        """Test that generic Exception returns 500 with proper message."""
+        from unittest.mock import AsyncMock
+        from src.main import app
+        from src.dependencies import get_weight_service
+
+        # Mock weight_service to raise generic Exception
+        mock_service = AsyncMock()
+        async def mock_record_weight(request):
+            raise Exception("Unexpected database connection error")
+        mock_service.record_weight = mock_record_weight
+
+        # Override dependency
+        app.dependency_overrides[get_weight_service] = lambda: mock_service
+
+        try:
+            client = TestClient(app)
+            payload = {
+                "direction": "in",
+                "truck": "ERROR_TEST_004",
+                "containers": "C001",
+                "weight": 5000,
+                "unit": "kg"
+            }
+
+            response = client.post("/weight", json=payload)
+
+            assert response.status_code == 500
+            assert "Internal server error" in response.json()["detail"]
+            assert "database connection" in response.json()["detail"]
+        finally:
+            app.dependency_overrides.clear()
