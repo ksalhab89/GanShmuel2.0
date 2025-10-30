@@ -43,7 +43,7 @@ line-length = 88
 target-version = "py313"
 
 [tool.mypy]
-python_version = "3.13"
+python_version = "3.11"
 strict = false
 warn_return_any = false
 warn_unused_configs = true

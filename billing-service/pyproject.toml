@@ -45,7 +45,7 @@ profile = "black"
 line_length = 88
 
 [tool.mypy]
-python_version = "3.13"
+python_version = "3.11"
 strict = false
 warn_return_any = false
 warn_unused_configs = true
