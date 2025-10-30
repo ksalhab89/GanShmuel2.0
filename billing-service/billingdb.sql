@@ -19,8 +19,7 @@ CREATE TABLE IF NOT EXISTS `Rates` (
   `product_id` varchar(50) NOT NULL,
   `rate` int(11) DEFAULT 0,
   `scope` varchar(50) DEFAULT NULL,
-  INDEX idx_scope (scope),
-  FOREIGN KEY (scope) REFERENCES `Provider`(`id`) ON DELETE CASCADE
+  INDEX idx_scope (scope)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `Trucks` (
