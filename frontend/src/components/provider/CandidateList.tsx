@@ -22,11 +22,19 @@ import {
 } from '@mui/material'
 import { useQuery } from '@tanstack/react-query'
 import { providerApi } from '@/api/providerApi'
+import axios from 'axios'
 import type {
   CandidateStatus,
   ProductType,
   CandidateListParams,
 } from '@/types/provider'
+
+const getErrorMessage = (error: Error): string => {
+  if (axios.isAxiosError(error)) {
+    return error.response?.data?.detail || error.message
+  }
+  return 'Unknown error'
+}
 
 const STATUS_COLORS: Record<
   CandidateStatus,
@@ -54,15 +62,14 @@ export default function CandidateList({ onSelectCandidate }: Props) {
     queryFn: () => providerApi.listCandidates(filters),
   })
 
-  const handleFilterChange = (field: keyof CandidateListParams, value: any) => {
+  const handleFilterChange = (field: keyof CandidateListParams, value: string | number | undefined) => {
     setFilters((prev) => ({ ...prev, [field]: value, page: 1 }))
   }
 
   if (error) {
     return (
       <Alert severity="error">
-        Failed to load candidates:{' '}
-        {(error as any)?.response?.data?.detail || 'Unknown error'}
+        Failed to load candidates: {getErrorMessage(error)}
       </Alert>
     )
   }

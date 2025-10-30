@@ -19,10 +19,18 @@ import {
 import { Check, Close } from '@mui/icons-material'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { providerApi } from '@/api/providerApi'
+import axios from 'axios'
 
 interface Props {
   candidateId: string | null
   onClose: () => void
+}
+
+const getErrorMessage = (error: Error): string => {
+  if (axios.isAxiosError(error)) {
+    return error.response?.data?.detail || error.message
+  }
+  return 'Failed to process candidate'
 }
 
 export default function AdminPanel({ candidateId, onClose }: Props) {
@@ -151,8 +159,7 @@ export default function AdminPanel({ candidateId, onClose }: Props) {
 
           {(approveMutation.isError || rejectMutation.isError) && (
             <Alert severity="error" sx={{ mb: 2 }}>
-              {((approveMutation.error || rejectMutation.error) as any)
-                ?.response?.data?.detail || 'Failed to process candidate'}
+              {getErrorMessage(approveMutation.error || rejectMutation.error)}
             </Alert>
           )}
 

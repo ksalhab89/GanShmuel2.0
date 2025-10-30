@@ -18,9 +18,17 @@ import {
 } from '@mui/material'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { providerApi } from '@/api/providerApi'
+import axios from 'axios'
 import type { CandidateCreate, ProductType } from '@/types/provider'
 
 const PRODUCTS: ProductType[] = ['apples', 'oranges', 'grapes', 'cherries']
+
+const getErrorMessage = (error: Error): string => {
+  if (axios.isAxiosError(error)) {
+    return error.response?.data?.detail || error.message
+  }
+  return 'Failed to submit registration'
+}
 
 export default function RegistrationForm() {
   const queryClient = useQueryClient()
@@ -59,7 +67,7 @@ export default function RegistrationForm() {
     mutation.mutate(formData)
   }
 
-  const handleChange = (field: keyof CandidateCreate, value: any) => {
+  const handleChange = (field: keyof CandidateCreate, value: string | ProductType[]) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
   }
 
@@ -82,8 +90,7 @@ export default function RegistrationForm() {
 
         {mutation.isError && (
           <Alert severity="error" sx={{ mb: 2 }}>
-            {(mutation.error as any)?.response?.data?.detail ||
-              'Failed to submit registration'}
+            {getErrorMessage(mutation.error)}
           </Alert>
         )}
 
