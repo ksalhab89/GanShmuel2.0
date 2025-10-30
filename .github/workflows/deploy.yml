@@ -1,4 +1,18 @@
 name: Build and Deploy
+# TEMPLATE WORKFLOW - Requires Configuration Before Use
+#
+# This workflow provides a complete CI/CD pipeline skeleton including:
+# - Docker image building and pushing to GitHub Container Registry
+# - Staging and production deployment with manual approval gates
+# - Rollback capability
+#
+# Before using in production, configure:
+# 1. Deployment SSH keys or cloud provider credentials (AWS, GCP, Azure)
+# 2. Update deployment scripts with your infrastructure details
+# 3. Configure GitHub Environments (staging, production) with appropriate protections
+# 4. Uncomment and configure AWS/cloud provider blocks if using cloud deployment
+#
+# Current status: Functional for building/pushing images, deployment steps are placeholders
 
 on:
   push:
@@ -19,6 +33,11 @@ permissions:
   contents: read
   packages: write
   id-token: write
+
+# Prevent concurrent deployments (queue them instead for safety)
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.inputs.environment || github.ref }}
+  cancel-in-progress: false
 
 env:
   REGISTRY: ghcr.io

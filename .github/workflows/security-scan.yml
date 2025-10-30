@@ -15,6 +15,11 @@ permissions:
   security-events: write
   pull-requests: write
 
+# Cancel redundant workflow runs to save compute resources
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   # =================================================================
   # Docker Image Security Scanning with Trivy
