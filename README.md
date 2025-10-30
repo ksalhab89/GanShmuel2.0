@@ -2,6 +2,8 @@
 
 > Enterprise-grade microservices architecture for industrial weight management and billing operations
 
+<!-- CI cache test run -->
+
 [![Portfolio Project](https://img.shields.io/badge/portfolio-demo--ready-brightgreen.svg)](https://github.com/ksalhab89/GanShmuel2.0)
 [![Docker](https://img.shields.io/badge/docker-compose-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.120+-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
