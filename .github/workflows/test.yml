@@ -1,4 +1,5 @@
 name: Test Suite
+# Cache verification run - testing docker/bake-action cache effectiveness
 
 on:
   push:
