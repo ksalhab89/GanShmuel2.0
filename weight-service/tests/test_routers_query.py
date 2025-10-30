@@ -653,3 +653,130 @@ class TestQueryRouterExceptionHandlers:
             assert "Container scan failed" in response.json()["detail"]
         finally:
             app.dependency_overrides.clear()
+
+
+class TestQueryRouterSuccessPath:
+    """Test suite for successful query operations."""
+
+    def test_query_weighings_success(self):
+        """Test successful weighing transactions query."""
+        from unittest.mock import AsyncMock
+        from src.main import app
+        from src.dependencies import get_query_service
+
+        # Mock query_service to return success response
+        mock_service = AsyncMock()
+        async def mock_query_transactions(params):
+            return [
+                {
+                    "id": "test-id-1",
+                    "direction": "in",
+                    "truck": "TRUCK-001",
+                    "bruto": 5000,
+                    "produce": "Apples",
+                    "containers": ["C001", "C002"]
+                }
+            ]
+        mock_service.query_transactions = mock_query_transactions
+
+        # Override dependency
+        app.dependency_overrides[get_query_service] = lambda: mock_service
+
+        try:
+            client = TestClient(app)
+            response = client.get("/weight")
+
+            assert response.status_code == 200
+            assert isinstance(response.json(), list)
+            assert len(response.json()) == 1
+            assert response.json()[0]["truck"] == "TRUCK-001"
+        finally:
+            app.dependency_overrides.clear()
+
+    def test_query_item_success(self):
+        """Test successful item lookup."""
+        from unittest.mock import AsyncMock
+        from src.main import app
+        from src.dependencies import get_query_service
+
+        # Mock query_service to return success response
+        mock_service = AsyncMock()
+        async def mock_get_item_info(item_id, from_datetime=None, to_datetime=None):
+            return {
+                "id": item_id,
+                "item_type": "truck",
+                "tara": "na",
+                "sessions": []
+            }
+        mock_service.get_item_info = mock_get_item_info
+
+        # Override dependency
+        app.dependency_overrides[get_query_service] = lambda: mock_service
+
+        try:
+            client = TestClient(app)
+            response = client.get("/item/TRUCK-001")
+
+            assert response.status_code == 200
+            assert response.json()["id"] == "TRUCK-001"
+            assert response.json()["item_type"] == "truck"
+            assert response.json()["tara"] == "na"
+        finally:
+            app.dependency_overrides.clear()
+
+    def test_query_session_success(self):
+        """Test successful session lookup."""
+        from unittest.mock import AsyncMock
+        from src.main import app
+        from src.dependencies import get_session_service
+
+        # Mock session_service to return success response
+        mock_service = AsyncMock()
+        async def mock_get_session_response(session_id):
+            return {
+                "id": session_id,
+                "truck": "TRUCK-001",
+                "bruto": 5000
+            }
+        mock_service.get_session_response = mock_get_session_response
+
+        # Override dependency
+        app.dependency_overrides[get_session_service] = lambda: mock_service
+
+        try:
+            client = TestClient(app)
+            response = client.get("/session/test-session-123")
+
+            assert response.status_code == 200
+            assert response.json()["id"] == "test-session-123"
+            assert response.json()["truck"] == "TRUCK-001"
+            assert response.json()["bruto"] == 5000
+        finally:
+            app.dependency_overrides.clear()
+
+    def test_query_unknown_containers_success(self):
+        """Test successful unknown containers query."""
+        from unittest.mock import AsyncMock
+        from src.main import app
+        from src.dependencies import get_container_service
+
+        # Mock container_service to return success response (List[str])
+        mock_service = AsyncMock()
+        async def mock_find_unknown_containers():
+            return ["UNKNOWN-001", "UNKNOWN-002"]
+        mock_service.find_unknown_containers = mock_find_unknown_containers
+
+        # Override dependency
+        app.dependency_overrides[get_container_service] = lambda: mock_service
+
+        try:
+            client = TestClient(app)
+            response = client.get("/unknown")
+
+            assert response.status_code == 200
+            assert isinstance(response.json(), list)
+            assert len(response.json()) == 2
+            assert response.json()[0] == "UNKNOWN-001"
+            assert response.json()[1] == "UNKNOWN-002"
+        finally:
+            app.dependency_overrides.clear()
