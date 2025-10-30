@@ -3,10 +3,15 @@
 import pytest
 import uuid
 from unittest.mock import AsyncMock, MagicMock
+from pydantic import ValidationError
 
 from src.models.schemas import WeightRequest, WeightResponse
-from src.services.weight_service import WeightService, WeighingSequenceError, InvalidWeightError
-from src.utils.exceptions import ContainerNotFoundError
+from src.services.weight_service import (
+    WeightService,
+    WeighingSequenceError,
+    InvalidWeightError,
+    ContainerNotFoundError
+)
 
 
 class TestWeightService:
@@ -222,17 +227,14 @@ class TestWeightService:
     @pytest.mark.asyncio
     async def test_record_weight_empty_containers(self, weight_service):
         """Test weight recording with empty container list."""
-        # Arrange
-        request = WeightRequest(
-            direction="in",
-            truck="ABC123",
-            containers="",  # Empty
-            weight=5000
-        )
-        
-        # Act & Assert
-        with pytest.raises(InvalidWeightError):
-            await weight_service.record_weight(request)
+        # Act & Assert - Pydantic validation should catch this before service layer
+        with pytest.raises(ValidationError):
+            request = WeightRequest(
+                direction="in",
+                truck="ABC123",
+                containers="",  # Empty
+                weight=5000
+            )
     
     @pytest.mark.asyncio
     async def test_validate_weighing_sequence_valid_in(self, weight_service):
