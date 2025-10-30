@@ -51,19 +51,23 @@ async def query_weighings(
         transactions = await query_service.query_transactions(params)
 
         return transactions
-        
+
+    except HTTPException:
+        # Re-raise HTTPException without wrapping
+        raise
+
     except InvalidDateRangeError as e:
         raise HTTPException(
             status_code=400,
             detail=f"Invalid date range: {str(e)}"
         ) from e
-        
+
     except ValueError as e:
         raise HTTPException(
             status_code=400,
             detail=f"Invalid query parameters: {str(e)}"
         ) from e
-        
+
     except Exception as e:
         raise HTTPException(
             status_code=500,
@@ -98,21 +102,25 @@ async def get_item_details(
             from_datetime=from_datetime,
             to_datetime=to_datetime,
         )
-        
+
         if not item_info:
             raise HTTPException(
                 status_code=404,
                 detail=f"Item '{item_id}' not found"
             )
-        
+
         return item_info
-        
+
+    except HTTPException:
+        # Re-raise HTTPException without wrapping
+        raise
+
     except InvalidDateRangeError as e:
         raise HTTPException(
             status_code=400,
             detail=f"Invalid date range: {str(e)}"
         ) from e
-        
+
     except Exception as e:
         raise HTTPException(
             status_code=500,
@@ -149,13 +157,17 @@ async def get_session_details(
             )
 
         return session_info
-        
+
+    except HTTPException:
+        # Re-raise HTTPException without wrapping
+        raise
+
     except ValueError as e:
         raise HTTPException(
             status_code=400,
             detail=f"Invalid session ID format: {str(e)}"
         ) from e
-        
+
     except Exception as e:
         raise HTTPException(
             status_code=500,
