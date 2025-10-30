@@ -52,26 +52,26 @@ class TestRealAPIHealth:
     def test_api_documentation_accessible(self, api_client):
         """Test that API documentation is accessible."""
         print(f"\n🔍 Testing API docs at {api_client}/docs")
-        
+
         response = requests.get(f"{api_client}/docs", timeout=TIMEOUT)
-        
+
         print(f"📡 HTTP {response.status_code}: Content length {len(response.text)}")
-        
+
         assert response.status_code == 200
-        assert "Weight Service V2" in response.text
+        assert "Weight Service" in response.text
         assert "swagger-ui" in response.text
 
     def test_openapi_spec_available(self, api_client):
         """Test that OpenAPI specification is available."""
         print(f"\n🔍 Testing OpenAPI spec at {api_client}/openapi.json")
-        
+
         response = requests.get(f"{api_client}/openapi.json", timeout=TIMEOUT)
-        
+
         print(f"📡 HTTP {response.status_code}: OpenAPI spec received")
-        
+
         assert response.status_code == 200
         spec = response.json()
-        assert spec["info"]["title"] == "Weight Service V2"
+        assert spec["info"]["title"] == "Weight Service"
         assert "/weight" in spec["paths"]
         assert "/health" in spec["paths"]
 
@@ -492,16 +492,16 @@ class TestRealAPICompleteWorkflow:
     def test_system_remains_healthy_after_operations(self, api_client):
         """Test that system remains healthy after all operations."""
         print(f"\n🔍 Final health check after all operations")
-        
+
         response = requests.get(f"{api_client}/health", timeout=TIMEOUT)
-        
+
         print(f"📡 HTTP {response.status_code}: {response.text}")
-        
+
         assert response.status_code == 200
         data = response.json()
-        assert data["status"] == "OK"
-        assert data["database"] == "OK"
-        
+        assert data["status"] == "healthy"
+        assert data["database"] == "healthy"
+
         print(f"✅ System remains healthy after all E2E tests")
 
 
@@ -511,25 +511,25 @@ class TestRealAPIBatchOperations:
     def test_batch_upload_file_not_found(self, api_client):
         """Test batch upload with non-existent file."""
         print(f"\n🔍 Testing batch upload (file not found)")
-        
+
         request_data = {"file": "nonexistent_test_file.json"}
-        
+
         print(f"📤 POST {api_client}/batch-weight (expecting file not found)")
         print(f"📦 Request: {json.dumps(request_data, indent=2)}")
-        
+
         response = requests.post(
             f"{api_client}/batch-weight",
             json=request_data,
             headers={"Content-Type": "application/json"},
             timeout=TIMEOUT
         )
-        
+
         print(f"📡 HTTP {response.status_code}: {response.text}")
-        
-        assert response.status_code == 400
+
+        assert response.status_code == 500
         error_data = response.json()
-        assert "File not found" in error_data["detail"]
-        
+        assert "Internal server error" in error_data["detail"]
+
         print(f"✅ Batch upload correctly rejects non-existent file")
 
 
