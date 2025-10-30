@@ -159,7 +159,7 @@ export default function AdminPanel({ candidateId, onClose }: Props) {
 
           {(approveMutation.isError || rejectMutation.isError) && (
             <Alert severity="error" sx={{ mb: 2 }}>
-              {getErrorMessage(approveMutation.error || rejectMutation.error)}
+              {getErrorMessage((approveMutation.error || rejectMutation.error)!)}
             </Alert>
           )}
 

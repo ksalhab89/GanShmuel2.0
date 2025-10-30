@@ -67,7 +67,7 @@ export default function RegistrationForm() {
     mutation.mutate(formData)
   }
 
-  const handleChange = (field: keyof CandidateCreate, value: string | ProductType[]) => {
+  const handleChange = (field: keyof CandidateCreate, value: string | number | ProductType[]) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
   }
 
