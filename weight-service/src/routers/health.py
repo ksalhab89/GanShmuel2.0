@@ -1,25 +1,31 @@
 """Health check endpoints."""
 
+from datetime import datetime
 from importlib.metadata import version
-from fastapi import APIRouter
-from pydantic import BaseModel
+from typing import Annotated
+from fastapi import APIRouter, Depends
+from sqlalchemy import text
+
+from ..dependencies import DatabaseSession
+from ..models.schemas import HealthResponse
 
 router = APIRouter(tags=["Health"])
 
 
-class HealthResponse(BaseModel):
-    """Health check response model."""
-
-    status: str
-    service: str
-    version: str
-
-
-@router.get("/health", response_model=HealthResponse)
-async def health_check() -> HealthResponse:
+@router.get("/health")
+async def health_check(db: DatabaseSession = ...):
     """Check application health."""
-    return HealthResponse(
-        status="healthy",
-        service="weight-service",
-        version=version("weight-service")
-    )
+    # Test database connection
+    try:
+        await db.execute(text("SELECT 1"))
+        database_status = "healthy"
+    except Exception:
+        database_status = "unhealthy"
+
+    return {
+        "status": "healthy" if database_status == "healthy" else "degraded",
+        "service": "weight-service",
+        "version": version("weight-service"),
+        "database": database_status,
+        "timestamp": datetime.now().isoformat()
+    }

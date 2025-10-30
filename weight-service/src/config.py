@@ -40,10 +40,16 @@ class Settings(BaseSettings):
     cors_headers: list[str] = ["*"]
 
     # File upload settings
-    upload_dir: str = Field(
+    files_directory: str = Field(
         default="/in",
         description="Directory for batch file uploads",
     )
+
+    # Backwards compatibility alias
+    @property
+    def upload_dir(self) -> str:
+        """Alias for files_directory for backwards compatibility."""
+        return self.files_directory
 
 
 settings = Settings()

@@ -42,14 +42,14 @@ async def query_weighings(
     try:
         # Create query parameters
         params = WeightQueryParams(
-            from_datetime=from_datetime,
-            to_datetime=to_datetime,
-            filter_directions=filter_directions,
+            from_time=from_datetime,
+            to_time=to_datetime,
+            filter=filter_directions if filter_directions else "in,out,none",
         )
-        
+
         # Execute query
         transactions = await query_service.query_transactions(params)
-        
+
         return transactions
         
     except InvalidDateRangeError as e:
@@ -140,14 +140,14 @@ async def get_session_details(
     """
     try:
         # Get session details
-        session_info = await session_service.get_session_details(session_id)
-        
+        session_info = await session_service.get_session_response(session_id)
+
         if not session_info:
             raise HTTPException(
                 status_code=404,
                 detail=f"Session '{session_id}' not found"
             )
-        
+
         return session_info
         
     except ValueError as e:
