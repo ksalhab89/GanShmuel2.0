@@ -12,10 +12,10 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@7f4fc3e22c37d6ff65e88745f38bd3157c663f7c # v4
         with:
           python-version: '3.11'
 
@@ -37,7 +37,7 @@ jobs:
         continue-on-error: true
 
       - name: Weight Service - Upload HTML coverage
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: weight-service-coverage-html
           path: weight-service/htmlcov/
@@ -54,7 +54,7 @@ jobs:
         continue-on-error: true
 
       - name: Billing Service - Upload HTML coverage
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: billing-service-coverage-html
           path: billing-service/htmlcov/
@@ -71,14 +71,14 @@ jobs:
         continue-on-error: true
 
       - name: Shift Service - Upload HTML coverage
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: shift-service-coverage-html
           path: shift-service/htmlcov/
 
       # Frontend Coverage
       - name: Set up Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@3235b876344d2a9aa001b8d1453c930bba69e610 # v3
         with:
           node-version: '18'
           cache: 'npm'
@@ -94,7 +94,7 @@ jobs:
         continue-on-error: true
 
       - name: Frontend - Upload HTML coverage
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: frontend-coverage-html
           path: frontend/coverage/
@@ -133,14 +133,14 @@ jobs:
           fi
 
       - name: Upload coverage summary
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: coverage-summary
           path: coverage-summary.md
 
       - name: Comment PR with coverage
         if: github.event_name == 'pull_request'
-        uses: actions/github-script@v8
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         with:
           script: |
             const fs = require('fs');
