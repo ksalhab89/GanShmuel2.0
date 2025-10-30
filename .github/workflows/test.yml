@@ -304,7 +304,7 @@ jobs:
           EOF
 
       - name: Build services with Docker layer caching
-        uses: docker/bake-action@v5
+        uses: docker/bake-action@v6
         with:
           files: docker-compose.yml
           load: true
