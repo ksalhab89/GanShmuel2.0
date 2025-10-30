@@ -1,2 +1,0 @@
-time="2025-10-26T13:34:05+02:00" level=warning msg="C:\\Users\\ksalh\\IdeaProjects\\gan-shmuel-2\\docker-compose.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion"
-OCI runtime exec failed: exec failed: unable to start container process: exec: "pytest": executable file not found in $PATH: unknown

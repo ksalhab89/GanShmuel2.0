@@ -65,6 +65,7 @@ build/
 .mypy_cache/
 .ruff_cache/
 pytest_output.txt
+coverage_output.txt
 
 # Test outputs
 test_migrations.py
