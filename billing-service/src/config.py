@@ -1,15 +1,39 @@
+import os
+from urllib.parse import urlparse
 
 from pydantic import Field
 from pydantic_settings import BaseSettings
 
 
+def _parse_db_url():
+    """Parse DB_URL environment variable if present."""
+    db_url = os.getenv("DB_URL")
+    if not db_url:
+        return {}
+
+    try:
+        url = urlparse(db_url)
+        return {
+            "db_host": url.hostname or "localhost",
+            "db_port": url.port or 3307,
+            "db_user": url.username or "bill",
+            "db_password": url.password or "billing_pass",
+            "db_name": url.path.lstrip("/") or "billdb",
+        }
+    except Exception:
+        return {}
+
+
+_db_defaults = _parse_db_url()
+
+
 class Settings(BaseSettings):
     # Database configuration
-    db_host: str = Field(default="localhost", alias="DB_HOST")
-    db_port: int = Field(default=3307, alias="DB_PORT")
-    db_user: str = Field(default="bill", alias="DB_USER")
-    db_password: str = Field(default="billing_pass", alias="DB_PASSWORD")
-    db_name: str = Field(default="billdb", alias="DB_NAME")
+    db_host: str = Field(default=_db_defaults.get("db_host", "localhost"), alias="DB_HOST")
+    db_port: int = Field(default=_db_defaults.get("db_port", 3307), alias="DB_PORT")
+    db_user: str = Field(default=_db_defaults.get("db_user", "bill"), alias="DB_USER")
+    db_password: str = Field(default=_db_defaults.get("db_password", "billing_pass"), alias="DB_PASSWORD")
+    db_name: str = Field(default=_db_defaults.get("db_name", "billdb"), alias="DB_NAME")
 
     # Weight service configuration
     weight_service_url: str = "http://localhost:5001"
