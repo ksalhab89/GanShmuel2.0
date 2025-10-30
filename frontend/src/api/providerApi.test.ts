@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import axios from 'axios'
+import axios, { type AxiosInstance } from 'axios'
 import type { Candidate, CandidateCreate } from '@/types/provider'
 
 // Mock axios with proper Vitest mocking
@@ -12,7 +12,7 @@ const mockAxiosInstance = {
 }
 
 // Set up axios.create to return our mock instance
-vi.mocked(axios.create).mockReturnValue(mockAxiosInstance as any)
+vi.mocked(axios.create).mockReturnValue(mockAxiosInstance as unknown as AxiosInstance)
 
 // Import providerApi AFTER mocking axios
 const { providerApi } = await import('./providerApi')
