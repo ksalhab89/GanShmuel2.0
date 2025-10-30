@@ -255,14 +255,6 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Cache Docker layers
-        uses: actions/cache@v3
-        with:
-          path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-buildx-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-buildx-
-
       - name: Create .env file for Docker Compose
         run: |
           cat > .env <<EOF
@@ -311,22 +303,17 @@ jobs:
           JWT_EXPIRATION_MINUTES=30
           EOF
 
-      - name: Build and start services with Docker Compose
-        env:
-          BUILDKIT_PROGRESS: plain
-          DOCKER_BUILDKIT: 1
-          COMPOSE_DOCKER_CLI_BUILD: 1
-        run: |
-          # Build services with layer caching
-          docker compose build \
-            --build-arg BUILDKIT_INLINE_CACHE=1
+      - name: Build services with Docker layer caching
+        uses: docker/bake-action@v5
+        with:
+          files: docker-compose.yml
+          load: true
+          set: |
+            *.cache-from=type=gha
+            *.cache-to=type=gha,mode=max
 
-          # Start all services
-          docker compose up -d
-
-          # Save buildx cache for next run
-          mkdir -p /tmp/.buildx-cache-new
-          docker buildx du --verbose 2>/dev/null || true
+      - name: Start services
+        run: docker compose up -d
 
       - name: Wait for services via API Gateway
         run: |
