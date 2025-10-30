@@ -34,7 +34,7 @@ class TestWeightRecordingRouter:
         assert data["truck"] == "TEST_TRUCK_001"
         assert data["gross_weight"] == 5000
         assert "session_id" in data
-        assert data["net_weight"] == "na"
+        assert data["net_weight"] is None
 
     def test_post_weight_out_direction_success(self, client):
         """Test successful OUT weighing completes existing session."""
@@ -324,7 +324,8 @@ class TestWeightRecordingRouter:
         assert response.status_code == 200
 
         data = response.json()
-        assert data["gross_weight"] == 11000
+        # 11000 lbs converts to ~4990 kg (11000 / 2.20462)
+        assert data["gross_weight"] == 4989
 
     def test_post_weight_default_truck_na(self, client):
         """Test that truck defaults to 'na' for NONE direction."""

@@ -14,21 +14,11 @@ from ..utils.calculations import (
     parse_container_list,
     validate_weight_range,
 )
-
-
-class WeighingSequenceError(Exception):
-    """Exception raised for invalid weighing sequences."""
-    pass
-
-
-class InvalidWeightError(Exception):
-    """Exception raised for invalid weight values."""
-    pass
-
-
-class ContainerNotFoundError(Exception):
-    """Exception raised when containers are not registered."""
-    pass
+from ..utils.exceptions import (
+    ContainerNotFoundError,
+    InvalidWeightError,
+    WeighingSequenceError,
+)
 
 
 class WeightService:

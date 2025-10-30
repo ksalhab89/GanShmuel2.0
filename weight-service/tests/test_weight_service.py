@@ -6,8 +6,8 @@ from unittest.mock import AsyncMock, MagicMock
 from pydantic import ValidationError
 
 from src.models.schemas import WeightRequest, WeightResponse
-from src.services.weight_service import (
-    WeightService,
+from src.services.weight_service import WeightService
+from src.utils.exceptions import (
     WeighingSequenceError,
     InvalidWeightError,
     ContainerNotFoundError

@@ -26,7 +26,44 @@ def event_loop():
 @pytest.fixture(scope="session", autouse=True)
 def setup_database(event_loop):
     """Initialize database for all tests."""
-    event_loop.run_until_complete(init_db())
+    async def _setup():
+        await init_db()
+        # Seed common test containers
+        await _seed_containers()
+
+    async def _seed_containers():
+        """Seed test containers with weights."""
+        from src.models.database import ContainerRegistered
+        from src.database import AsyncSessionLocal
+
+        async with AsyncSessionLocal() as session:
+            # Common test containers with weights
+            test_containers = [
+                ContainerRegistered(container_id="C001", weight=50, unit="kg"),
+                ContainerRegistered(container_id="C002", weight=60, unit="kg"),
+                ContainerRegistered(container_id="C003", weight=55, unit="kg"),
+                ContainerRegistered(container_id="C100", weight=45, unit="kg"),
+                ContainerRegistered(container_id="C101", weight=48, unit="kg"),
+                ContainerRegistered(container_id="C200", weight=52, unit="kg"),
+                ContainerRegistered(container_id="C201", weight=53, unit="kg"),
+                ContainerRegistered(container_id="C300", weight=50, unit="kg"),
+                ContainerRegistered(container_id="C301", weight=50, unit="kg"),
+                ContainerRegistered(container_id="C302", weight=50, unit="kg"),
+                ContainerRegistered(container_id="C400", weight=55, unit="kg"),
+                ContainerRegistered(container_id="C401", weight=55, unit="kg"),
+                ContainerRegistered(container_id="C500", weight=60, unit="kg"),
+                ContainerRegistered(container_id="C501", weight=60, unit="kg"),
+                ContainerRegistered(container_id="C600", weight=50, unit="kg"),
+                ContainerRegistered(container_id="C601", weight=50, unit="kg"),
+                ContainerRegistered(container_id="C700", weight=45, unit="kg"),
+                ContainerRegistered(container_id="C800", weight=48, unit="kg"),
+                ContainerRegistered(container_id="C900", weight=52, unit="kg"),
+            ]
+
+            session.add_all(test_containers)
+            await session.commit()
+
+    event_loop.run_until_complete(_setup())
     yield
     event_loop.run_until_complete(close_db())
 
