@@ -105,6 +105,13 @@ class TestContainerListValidation:
         assert not is_valid
         assert "cannot be empty" in errors[0]
 
+    def test_container_list_only_commas_and_whitespace(self):
+        """Test container list with only commas and whitespace."""
+        is_valid, containers, errors = validate_container_list("  ,  ,  ")
+        assert not is_valid
+        assert containers == []
+        assert "cannot be empty after parsing" in errors[0]
+
     def test_container_list_with_duplicates(self):
         """Test container list with duplicate IDs."""
         is_valid, containers, errors = validate_container_list("C001,C002,C001")

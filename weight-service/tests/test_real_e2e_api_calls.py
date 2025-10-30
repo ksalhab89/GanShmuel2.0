@@ -9,7 +9,8 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 
 # Configuration for the running service
-BASE_URL = "http://localhost:5001"
+# Use API Gateway URL (port 80) - backend ports are not exposed externally
+BASE_URL = "http://localhost/api/weight"
 TIMEOUT = 10  # seconds
 
 
@@ -19,33 +20,34 @@ def api_client():
     try:
         response = requests.get(f"{BASE_URL}/health", timeout=TIMEOUT)
         if response.status_code != 200:
-            pytest.skip(f"Weight Service  not healthy. Status: {response.status_code}")
-        
+            pytest.skip(f"Weight Service not healthy. Status: {response.status_code}")
+
         health_data = response.json()
-        if health_data.get("status") != "OK":
-            pytest.skip(f"Weight Service  not healthy. Health: {health_data}")
-            
-        print(f"\n✅ Connected to Weight Service  at {BASE_URL}")
+        if health_data.get("status") != "healthy":
+            pytest.skip(f"Weight Service not healthy. Health: {health_data}")
+
+        print(f"\n✅ Connected to Weight Service at {BASE_URL}")
         return BASE_URL
     except requests.exceptions.RequestException as e:
-        pytest.skip(f"Cannot connect to Weight Service  at {BASE_URL}: {e}")
+        pytest.skip(f"Cannot connect to Weight Service at {BASE_URL}: {e}")
 
 
 class TestRealAPIHealth:
     """Test real API health and connectivity."""
 
     def test_health_endpoint_responds(self, api_client):
-        """Test that health endpoint responds with OK status."""
+        """Test that health endpoint responds with healthy status."""
         print(f"\n🔍 Testing health endpoint at {api_client}/health")
-        
+
         response = requests.get(f"{api_client}/health", timeout=TIMEOUT)
-        
+
         print(f"📡 HTTP {response.status_code}: {response.text}")
-        
+
         assert response.status_code == 200
         data = response.json()
-        assert data["status"] == "OK"
-        assert data["database"] == "OK"
+        assert data["status"] == "healthy"
+        assert data["service"] == "weight-service"
+        assert "version" in data
 
     def test_api_documentation_accessible(self, api_client):
         """Test that API documentation is accessible."""

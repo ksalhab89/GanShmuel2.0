@@ -258,39 +258,56 @@ jobs:
       - name: Start services with Docker Compose
         run: docker-compose up -d
 
-      - name: Wait for services to be healthy
+      - name: Wait for services via API Gateway
         run: |
-          echo "Waiting for services to be ready..."
-          sleep 30
+          echo "Waiting for API Gateway and services to be ready..."
+          sleep 45
 
-          # Check weight service
-          curl -f http://localhost:5001/health || exit 1
+          # Check services via API Gateway (port 80)
+          echo "Checking weight-service via gateway..."
+          curl -f http://localhost/api/weight/health || exit 1
 
-          # Check billing service
-          curl -f http://localhost:5002/health || exit 1
+          echo "Checking billing-service via gateway..."
+          curl -f http://localhost/api/billing/health || exit 1
 
-          # Check shift service
-          curl -f http://localhost:5003/health || exit 1
+          echo "Checking shift-service via gateway..."
+          curl -f http://localhost/api/shift/health || exit 1
 
-          # Check frontend
-          curl -f http://localhost:3000 || exit 1
+          echo "Checking provider-registration-service via gateway..."
+          curl -f http://localhost/api/provider/health || exit 1
 
-      - name: Set up Python for integration tests
+          echo "Checking frontend via gateway..."
+          curl -f http://localhost/ || exit 1
+
+          echo "✅ All services healthy via API Gateway"
+
+      - name: Populate test data
+        run: |
+          echo "Populating test data for E2E tests..."
+          docker-compose --profile populate run --rm populate-data
+          echo "✅ Test data populated"
+
+      - name: Set up Python for E2E tests
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
 
-      - name: Install test dependencies
-        run: |
-          pip install pytest pytest-asyncio httpx
+      - name: Install UV
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
 
-      - name: Run integration tests
+      - name: Add UV to PATH
+        run: echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Install weight-service test dependencies
+        working-directory: weight-service
+        run: uv sync --dev
+
+      - name: Run E2E integration tests
+        working-directory: weight-service
         run: |
-          if [ -d "integration-tests" ]; then
-            pytest integration-tests/ -v
-          else
-            echo "No integration tests directory found, skipping..."
-          fi
+          echo "Running E2E tests against live services..."
+          uv run pytest tests/test_real_e2e_api_calls.py -v --tb=short
+          echo "✅ E2E tests passed"
 
       - name: Show service logs on failure
         if: failure()

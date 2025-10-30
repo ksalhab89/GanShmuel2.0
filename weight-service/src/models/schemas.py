@@ -237,6 +237,11 @@ class TransactionResponse(BaseModel):
     produce: str = Field(..., description="Produce type")
     containers: List[str] = Field(..., description="Container IDs")
 
+    @property
+    def session_id(self) -> str:
+        """Alias for id to support legacy code that expects session_id."""
+        return self.id
+
     def __init__(self, **data):
         # Set gross_weight to bruto if not provided
         if 'gross_weight' not in data or data['gross_weight'] is None:

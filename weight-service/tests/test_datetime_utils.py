@@ -2,6 +2,7 @@
 
 import pytest
 from datetime import datetime, timedelta
+from unittest.mock import patch, Mock
 from src.utils.datetime_utils import (
     parse_datetime_string,
     datetime_to_string,
@@ -314,14 +315,6 @@ class TestEdgeCases:
         )
         # From must be before to, so this should error
         assert len(errors) > 0
-
-    def test_get_month_range_december(self):
-        """Test getting month range for December."""
-        # Mock december date
-        dec_date = datetime(2024, 12, 15)
-        # This test verifies the function handles year rollover
-        # We can't easily test this without mocking datetime.now()
-        pass  # Covered by normal test
 
     def test_age_in_hours_zero(self):
         """Test age in hours for current moment."""
