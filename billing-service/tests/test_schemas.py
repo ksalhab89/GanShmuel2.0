@@ -1,23 +1,24 @@
 """Tests for Pydantic schemas and validation."""
+
+
 import pytest
 from pydantic import ValidationError
-from datetime import datetime
 
 from src.models.schemas import (
+    BillResponse,
     ErrorResponse,
     HealthResponse,
+    ProductSummary,
     ProviderCreate,
-    ProviderUpdate,
     ProviderResponse,
+    ProviderUpdate,
+    Rate,
     RateUpload,
     RateUploadResponse,
-    Rate,
     TruckCreate,
-    TruckUpdate,
-    TruckResponse,
     TruckDetails,
-    ProductSummary,
-    BillResponse
+    TruckResponse,
+    TruckUpdate,
 )
 
 
@@ -74,7 +75,7 @@ class TestProviderSchemas:
             ProviderCreate(name="")
 
         errors = exc_info.value.errors()
-        assert any('min_length' in str(error) for error in errors)
+        assert any("min_length" in str(error) for error in errors)
 
     def test_provider_create_long_name(self):
         """Test provider with name exceeding max length."""
@@ -83,7 +84,7 @@ class TestProviderSchemas:
             ProviderCreate(name=long_name)
 
         errors = exc_info.value.errors()
-        assert any('max_length' in str(error) for error in errors)
+        assert any("max_length" in str(error) for error in errors)
 
     def test_provider_create_max_valid_length(self):
         """Test provider with maximum valid name length."""
@@ -138,11 +139,7 @@ class TestRateSchemas:
         """Test rate serialization."""
         rate = Rate(product_id="oranges", rate=150, scope="provider_1")
         data = rate.model_dump()
-        assert data == {
-            "product_id": "oranges",
-            "rate": 150,
-            "scope": "provider_1"
-        }
+        assert data == {"product_id": "oranges", "rate": 150, "scope": "provider_1"}
 
     def test_rate_with_special_characters(self):
         """Test rate with special characters in product_id."""
@@ -170,7 +167,7 @@ class TestTruckSchemas:
             TruckCreate(id="12345678901", provider_id=1)
 
         errors = exc_info.value.errors()
-        assert any('max_length' in str(error) for error in errors)
+        assert any("max_length" in str(error) for error in errors)
 
     def test_truck_update_valid(self):
         """Test valid truck update."""
@@ -211,11 +208,7 @@ class TestProductSummary:
     def test_product_summary_valid(self):
         """Test valid product summary."""
         summary = ProductSummary(
-            product="apples",
-            count="5",
-            amount=1000,
-            rate=100,
-            pay=100000
+            product="apples", count="5", amount=1000, rate=100, pay=100000
         )
         assert summary.product == "apples"
         assert summary.count == "5"
@@ -226,11 +219,7 @@ class TestProductSummary:
     def test_product_summary_count_as_string(self):
         """Test product summary count is string."""
         summary = ProductSummary(
-            product="oranges",
-            count="10",
-            amount=2000,
-            rate=150,
-            pay=300000
+            product="oranges", count="10", amount=2000, rate=150, pay=300000
         )
         assert isinstance(summary.count, str)
         assert summary.count == "10"
@@ -238,11 +227,7 @@ class TestProductSummary:
     def test_product_summary_serialization(self):
         """Test product summary serialization."""
         summary = ProductSummary(
-            product="grapes",
-            count="3",
-            amount=500,
-            rate=200,
-            pay=100000
+            product="grapes", count="3", amount=500, rate=200, pay=100000
         )
         data = summary.model_dump()
         assert data["product"] == "grapes"
@@ -257,11 +242,7 @@ class TestBillResponse:
         """Test valid bill response."""
         products = [
             ProductSummary(
-                product="apples",
-                count="5",
-                amount=1000,
-                rate=100,
-                pay=100000
+                product="apples", count="5", amount=1000, rate=100, pay=100000
             )
         ]
 
@@ -273,7 +254,7 @@ class TestBillResponse:
             truckCount=3,
             sessionCount=10,
             products=products,
-            total=100000
+            total=100000,
         )
 
         assert bill.id == "1"
@@ -295,7 +276,7 @@ class TestBillResponse:
             truckCount=1,
             sessionCount=1,
             products=[],
-            total=0
+            total=0,
         )
 
         # Test that alias works in serialization
@@ -307,26 +288,14 @@ class TestBillResponse:
         """Test bill response with multiple products."""
         products = [
             ProductSummary(
-                product="apples",
-                count="5",
-                amount=1000,
-                rate=100,
-                pay=100000
+                product="apples", count="5", amount=1000, rate=100, pay=100000
             ),
             ProductSummary(
-                product="oranges",
-                count="3",
-                amount=600,
-                rate=150,
-                pay=90000
+                product="oranges", count="3", amount=600, rate=150, pay=90000
             ),
             ProductSummary(
-                product="grapes",
-                count="2",
-                amount=400,
-                rate=200,
-                pay=80000
-            )
+                product="grapes", count="2", amount=400, rate=200, pay=80000
+            ),
         ]
 
         bill = BillResponse(
@@ -337,7 +306,7 @@ class TestBillResponse:
             truckCount=5,
             sessionCount=15,
             products=products,
-            total=270000
+            total=270000,
         )
 
         assert len(bill.products) == 3
@@ -353,7 +322,7 @@ class TestBillResponse:
             truckCount=0,
             sessionCount=0,
             products=[],
-            total=0
+            total=0,
         )
 
         assert len(bill.products) == 0
@@ -363,11 +332,7 @@ class TestBillResponse:
         """Test complete bill response serialization."""
         products = [
             ProductSummary(
-                product="apples",
-                count="5",
-                amount=1000,
-                rate=100,
-                pay=100000
+                product="apples", count="5", amount=1000, rate=100, pay=100000
             )
         ]
 
@@ -379,7 +344,7 @@ class TestBillResponse:
             truckCount=3,
             sessionCount=10,
             products=products,
-            total=100000
+            total=100000,
         )
 
         data = bill.model_dump(by_alias=True)
@@ -396,13 +361,7 @@ class TestBillResponse:
     def test_bill_response_json_serialization(self):
         """Test bill response JSON serialization."""
         products = [
-            ProductSummary(
-                product="apples",
-                count="2",
-                amount=500,
-                rate=100,
-                pay=50000
-            )
+            ProductSummary(product="apples", count="2", amount=500, rate=100, pay=50000)
         ]
 
         bill = BillResponse(
@@ -413,7 +372,7 @@ class TestBillResponse:
             truckCount=2,
             sessionCount=5,
             products=products,
-            total=50000
+            total=50000,
         )
 
         json_str = bill.model_dump_json(by_alias=True)

@@ -1,7 +1,7 @@
 """Data query service for transaction and item information retrieval."""
 
 from datetime import datetime
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -255,7 +255,7 @@ class QueryService:
                 container = await self.container_repo.get_by_id(item_id)
                 if container:
                     last_tare_weight = str(container.weight)
-            except:
+            except Exception:
                 pass
         
         return ItemResponse(

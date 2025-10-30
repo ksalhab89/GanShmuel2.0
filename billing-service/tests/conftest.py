@@ -1,21 +1,23 @@
 """
 Test configuration and fixtures for billing service tests.
 """
-import pytest
-import pytest_asyncio
-from httpx import AsyncClient, ASGITransport
-from typing import AsyncGenerator
-from unittest.mock import AsyncMock, MagicMock
+
 import sys
 from pathlib import Path
+from typing import AsyncGenerator
+from unittest.mock import MagicMock
+
+import pytest
+import pytest_asyncio
+from httpx import ASGITransport, AsyncClient
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from src.main import app
-from src.models.database import Provider, Truck, Rate
-from src.models.repositories import ProviderRepository, TruckRepository, RateRepository
 from src.database import execute_query, initialize_pool
+from src.main import app
+from src.models.database import Provider, Rate, Truck
+from src.models.repositories import ProviderRepository, RateRepository, TruckRepository
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -29,6 +31,7 @@ def setup_database():
 def db_connection():
     """Provide a database connection for tests."""
     from src.database import get_connection
+
     connection = get_connection()
     yield connection
     connection.close()
@@ -142,6 +145,7 @@ async def multiple_rates(sample_provider) -> list[Rate]:
 @pytest.fixture
 def mock_weight_service():
     """Mock weight service client with configurable test data."""
+
     class MockWeightService:
         def __init__(self):
             self._transactions = []
@@ -169,6 +173,7 @@ def mock_weight_service():
 @pytest.fixture
 def mock_httpx_client():
     """Mock httpx.AsyncClient for weight service testing."""
+
     class MockHttpxClient:
         def __init__(self):
             self.responses = {}
@@ -181,7 +186,7 @@ def mock_httpx_client():
             """Mock request method (used by weight_client)."""
             # Find matching response
             for key in self.responses:
-                if key in url or url.endswith(key.lstrip('/')):
+                if key in url or url.endswith(key.lstrip("/")):
                     data, status = self.responses[key]
                     response = MagicMock()
                     response.status_code = status
@@ -218,11 +223,8 @@ def sample_weight_transactions():
             "truckTara": 10000,
             "neto": 30000,
             "produce": "Apples",
-            "containers": [
-                {"id": "C001", "tara": 5000},
-                {"id": "C002", "tara": 5000}
-            ],
-            "unit": "kg"
+            "containers": [{"id": "C001", "tara": 5000}, {"id": "C002", "tara": 5000}],
+            "unit": "kg",
         },
         {
             "id": "trans-002",
@@ -233,32 +235,21 @@ def sample_weight_transactions():
             "truckTara": 10000,
             "neto": 20000,
             "produce": "Oranges",
-            "containers": [
-                {"id": "C003", "tara": 5000},
-                {"id": "C004", "tara": 5000}
-            ],
-            "unit": "kg"
-        }
+            "containers": [{"id": "C003", "tara": 5000}, {"id": "C004", "tara": 5000}],
+            "unit": "kg",
+        },
     ]
 
 
 @pytest.fixture
 def sample_truck_details():
     """Sample truck details from weight service."""
-    return {
-        "id": "TRUCK001",
-        "tara": 10000,
-        "sessions": [
-            "session-001",
-            "session-002"
-        ]
-    }
+    return {"id": "TRUCK001", "tara": 10000, "sessions": ["session-001", "session-002"]}
 
 
 @pytest.fixture
 def excel_rate_file_path(tmp_path):
     """Create a temporary Excel file with rates for testing."""
-    import openpyxl
     from openpyxl import Workbook
 
     wb = Workbook()
@@ -283,12 +274,15 @@ def excel_rate_file_path(tmp_path):
 def mock_upload_file():
     """Create a mock UploadFile for testing."""
     from io import BytesIO
+
     import openpyxl
 
     class MockUploadFile:
         def __init__(self, filename: str, content: bytes):
             self.filename = filename
-            self.content_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            self.content_type = (
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
             self._file = BytesIO(content)
 
         async def read(self) -> bytes:

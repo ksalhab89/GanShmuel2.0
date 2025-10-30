@@ -1,15 +1,19 @@
 """API tests for rate management endpoints."""
+
+from io import BytesIO
+
+import openpyxl
 import pytest
 from httpx import AsyncClient
-from io import BytesIO
-import openpyxl
 
 
 class TestRatesAPI:
     """Test suite for rate management API endpoints."""
 
     @pytest.mark.asyncio
-    async def test_upload_rates_excel_success(self, test_client: AsyncClient, clean_database):
+    async def test_upload_rates_excel_success(
+        self, test_client: AsyncClient, clean_database
+    ):
         """Test uploading rates from Excel file."""
         # Create Excel file
         wb = openpyxl.Workbook()
@@ -22,7 +26,13 @@ class TestRatesAPI:
         wb.save(buffer)
         buffer.seek(0)
 
-        files = {"file": ("rates.xlsx", buffer, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")}
+        files = {
+            "file": (
+                "rates.xlsx",
+                buffer,
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            )
+        }
         response = await test_client.post("/rates", files=files)
 
         assert response.status_code == 200
@@ -31,7 +41,9 @@ class TestRatesAPI:
         assert "2" in data["message"]
 
     @pytest.mark.asyncio
-    async def test_upload_rates_excel_replaces_existing(self, test_client: AsyncClient, sample_rates):
+    async def test_upload_rates_excel_replaces_existing(
+        self, test_client: AsyncClient, sample_rates
+    ):
         """Test that uploading rates replaces existing rates."""
         # Create new Excel with different data
         wb = openpyxl.Workbook()
@@ -43,7 +55,13 @@ class TestRatesAPI:
         wb.save(buffer)
         buffer.seek(0)
 
-        files = {"file": ("rates.xlsx", buffer, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")}
+        files = {
+            "file": (
+                "rates.xlsx",
+                buffer,
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            )
+        }
         response = await test_client.post("/rates", files=files)
 
         assert response.status_code == 200
@@ -56,7 +74,9 @@ class TestRatesAPI:
         assert rates[0]["product_id"] == "Bananas"
 
     @pytest.mark.asyncio
-    async def test_upload_rates_invalid_file_format(self, test_client: AsyncClient, clean_database):
+    async def test_upload_rates_invalid_file_format(
+        self, test_client: AsyncClient, clean_database
+    ):
         """Test uploading non-Excel file returns error."""
         files = {"file": ("rates.txt", BytesIO(b"not an excel file"), "text/plain")}
         response = await test_client.post("/rates", files=files)
@@ -66,7 +86,9 @@ class TestRatesAPI:
         assert "detail" in data
 
     @pytest.mark.asyncio
-    async def test_upload_rates_missing_columns(self, test_client: AsyncClient, clean_database):
+    async def test_upload_rates_missing_columns(
+        self, test_client: AsyncClient, clean_database
+    ):
         """Test uploading Excel with missing required columns."""
         wb = openpyxl.Workbook()
         ws = wb.active
@@ -77,13 +99,21 @@ class TestRatesAPI:
         wb.save(buffer)
         buffer.seek(0)
 
-        files = {"file": ("rates.xlsx", buffer, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")}
+        files = {
+            "file": (
+                "rates.xlsx",
+                buffer,
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            )
+        }
         response = await test_client.post("/rates", files=files)
 
         assert response.status_code == 400
 
     @pytest.mark.asyncio
-    async def test_upload_rates_empty_file(self, test_client: AsyncClient, clean_database):
+    async def test_upload_rates_empty_file(
+        self, test_client: AsyncClient, clean_database
+    ):
         """Test uploading empty Excel file."""
         wb = openpyxl.Workbook()
         ws = wb.active
@@ -93,7 +123,13 @@ class TestRatesAPI:
         wb.save(buffer)
         buffer.seek(0)
 
-        files = {"file": ("rates.xlsx", buffer, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")}
+        files = {
+            "file": (
+                "rates.xlsx",
+                buffer,
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            )
+        }
         response = await test_client.post("/rates", files=files)
 
         # Should succeed with 0 rates
@@ -102,7 +138,9 @@ class TestRatesAPI:
         assert "0" in data["message"]
 
     @pytest.mark.asyncio
-    async def test_upload_rates_invalid_data_types(self, test_client: AsyncClient, clean_database):
+    async def test_upload_rates_invalid_data_types(
+        self, test_client: AsyncClient, clean_database
+    ):
         """Test uploading Excel with invalid data types."""
         wb = openpyxl.Workbook()
         ws = wb.active
@@ -113,29 +151,39 @@ class TestRatesAPI:
         wb.save(buffer)
         buffer.seek(0)
 
-        files = {"file": ("rates.xlsx", buffer, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")}
+        files = {
+            "file": (
+                "rates.xlsx",
+                buffer,
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            )
+        }
         response = await test_client.post("/rates", files=files)
 
         assert response.status_code == 400
 
     @pytest.mark.asyncio
-    async def test_upload_rates_from_directory_success(self, test_client: AsyncClient, clean_database):
+    async def test_upload_rates_from_directory_success(
+        self, test_client: AsyncClient, clean_database
+    ):
         """Test uploading rates from /in directory."""
         # This test requires actual file in /in directory
         # Skip if file doesn't exist
-        response = await test_client.post("/rates/from-directory", json={
-            "file": "rates.xlsx"
-        })
+        response = await test_client.post(
+            "/rates/from-directory", json={"file": "rates.xlsx"}
+        )
 
         # Should either succeed or return file not found
         assert response.status_code in [200, 400]
 
     @pytest.mark.asyncio
-    async def test_upload_rates_from_directory_file_not_found(self, test_client: AsyncClient, clean_database):
+    async def test_upload_rates_from_directory_file_not_found(
+        self, test_client: AsyncClient, clean_database
+    ):
         """Test uploading from non-existent file in directory."""
-        response = await test_client.post("/rates/from-directory", json={
-            "file": "nonexistent.xlsx"
-        })
+        response = await test_client.post(
+            "/rates/from-directory", json={"file": "nonexistent.xlsx"}
+        )
 
         assert response.status_code == 400
         data = response.json()
@@ -170,7 +218,10 @@ class TestRatesAPI:
         response = await test_client.get("/rates?format=excel")
 
         assert response.status_code == 200
-        assert response.headers["content-type"] == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        assert (
+            response.headers["content-type"]
+            == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
         assert "attachment" in response.headers["content-disposition"]
         assert "rates.xlsx" in response.headers["content-disposition"]
 
@@ -184,12 +235,17 @@ class TestRatesAPI:
 
     @pytest.mark.asyncio
     @pytest.mark.skip(reason="TODO: Fix later")
-    async def test_get_rates_excel_empty(self, test_client: AsyncClient, clean_database):
+    async def test_get_rates_excel_empty(
+        self, test_client: AsyncClient, clean_database
+    ):
         """Test downloading rates as Excel when database is empty."""
         response = await test_client.get("/rates?format=excel")
 
         assert response.status_code == 200
-        assert response.headers["content-type"] == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        assert (
+            response.headers["content-type"]
+            == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
 
         # Verify Excel has only headers
         excel_data = BytesIO(response.content)
@@ -199,24 +255,36 @@ class TestRatesAPI:
         assert ws.max_row == 1  # Only header row
 
     @pytest.mark.asyncio
-    async def test_get_rates_default_format(self, test_client: AsyncClient, sample_rates):
+    async def test_get_rates_default_format(
+        self, test_client: AsyncClient, sample_rates
+    ):
         """Test getting rates with default format (should be Excel)."""
         response = await test_client.get("/rates")
 
         assert response.status_code == 200
-        assert response.headers["content-type"] == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        assert (
+            response.headers["content-type"]
+            == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
 
     @pytest.mark.asyncio
-    async def test_get_rates_invalid_format(self, test_client: AsyncClient, sample_rates):
+    async def test_get_rates_invalid_format(
+        self, test_client: AsyncClient, sample_rates
+    ):
         """Test getting rates with invalid format parameter."""
         response = await test_client.get("/rates?format=invalid")
 
         # Should default to Excel format
         assert response.status_code == 200
-        assert response.headers["content-type"] == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        assert (
+            response.headers["content-type"]
+            == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
 
     @pytest.mark.asyncio
-    async def test_upload_rates_large_file(self, test_client: AsyncClient, clean_database):
+    async def test_upload_rates_large_file(
+        self, test_client: AsyncClient, clean_database
+    ):
         """Test uploading large Excel file with many rates."""
         wb = openpyxl.Workbook()
         ws = wb.active
@@ -230,7 +298,13 @@ class TestRatesAPI:
         wb.save(buffer)
         buffer.seek(0)
 
-        files = {"file": ("rates.xlsx", buffer, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")}
+        files = {
+            "file": (
+                "rates.xlsx",
+                buffer,
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            )
+        }
         response = await test_client.post("/rates", files=files)
 
         assert response.status_code == 200
@@ -238,7 +312,9 @@ class TestRatesAPI:
         assert "100" in data["message"]
 
     @pytest.mark.asyncio
-    async def test_upload_rates_with_provider_specific_scope(self, test_client: AsyncClient, clean_database):
+    async def test_upload_rates_with_provider_specific_scope(
+        self, test_client: AsyncClient, clean_database
+    ):
         """Test uploading rates with provider-specific scopes."""
         wb = openpyxl.Workbook()
         ws = wb.active
@@ -251,7 +327,13 @@ class TestRatesAPI:
         wb.save(buffer)
         buffer.seek(0)
 
-        files = {"file": ("rates.xlsx", buffer, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")}
+        files = {
+            "file": (
+                "rates.xlsx",
+                buffer,
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            )
+        }
         response = await test_client.post("/rates", files=files)
 
         assert response.status_code == 200
@@ -266,7 +348,9 @@ class TestRatesAPIEdgeCases:
     """Test suite for rate API edge cases."""
 
     @pytest.mark.asyncio
-    async def test_upload_rates_with_empty_values(self, test_client: AsyncClient, clean_database):
+    async def test_upload_rates_with_empty_values(
+        self, test_client: AsyncClient, clean_database
+    ):
         """Test uploading rates with empty values."""
         wb = openpyxl.Workbook()
         ws = wb.active
@@ -279,14 +363,22 @@ class TestRatesAPIEdgeCases:
         wb.save(buffer)
         buffer.seek(0)
 
-        files = {"file": ("rates.xlsx", buffer, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")}
+        files = {
+            "file": (
+                "rates.xlsx",
+                buffer,
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            )
+        }
         response = await test_client.post("/rates", files=files)
 
         # Should handle gracefully with error
         assert response.status_code == 400
 
     @pytest.mark.asyncio
-    async def test_upload_rates_with_negative_rate(self, test_client: AsyncClient, clean_database):
+    async def test_upload_rates_with_negative_rate(
+        self, test_client: AsyncClient, clean_database
+    ):
         """Test uploading rates with negative rate value."""
         wb = openpyxl.Workbook()
         ws = wb.active
@@ -297,14 +389,22 @@ class TestRatesAPIEdgeCases:
         wb.save(buffer)
         buffer.seek(0)
 
-        files = {"file": ("rates.xlsx", buffer, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")}
+        files = {
+            "file": (
+                "rates.xlsx",
+                buffer,
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            )
+        }
         response = await test_client.post("/rates", files=files)
 
         # Depending on business rules, might accept or reject
         assert response.status_code in [200, 400]
 
     @pytest.mark.asyncio
-    async def test_upload_rates_with_zero_rate(self, test_client: AsyncClient, clean_database):
+    async def test_upload_rates_with_zero_rate(
+        self, test_client: AsyncClient, clean_database
+    ):
         """Test uploading rates with zero rate value."""
         wb = openpyxl.Workbook()
         ws = wb.active
@@ -315,13 +415,21 @@ class TestRatesAPIEdgeCases:
         wb.save(buffer)
         buffer.seek(0)
 
-        files = {"file": ("rates.xlsx", buffer, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")}
+        files = {
+            "file": (
+                "rates.xlsx",
+                buffer,
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            )
+        }
         response = await test_client.post("/rates", files=files)
 
         assert response.status_code in [200, 400]
 
     @pytest.mark.asyncio
-    async def test_upload_rates_with_duplicate_entries(self, test_client: AsyncClient, clean_database):
+    async def test_upload_rates_with_duplicate_entries(
+        self, test_client: AsyncClient, clean_database
+    ):
         """Test uploading rates with duplicate product-scope combinations."""
         wb = openpyxl.Workbook()
         ws = wb.active
@@ -333,14 +441,22 @@ class TestRatesAPIEdgeCases:
         wb.save(buffer)
         buffer.seek(0)
 
-        files = {"file": ("rates.xlsx", buffer, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")}
+        files = {
+            "file": (
+                "rates.xlsx",
+                buffer,
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            )
+        }
         response = await test_client.post("/rates", files=files)
 
         # Should handle gracefully
         assert response.status_code in [200, 400]
 
     @pytest.mark.asyncio
-    async def test_upload_rates_with_extra_columns(self, test_client: AsyncClient, clean_database):
+    async def test_upload_rates_with_extra_columns(
+        self, test_client: AsyncClient, clean_database
+    ):
         """Test uploading Excel with extra columns beyond required."""
         wb = openpyxl.Workbook()
         ws = wb.active
@@ -351,14 +467,22 @@ class TestRatesAPIEdgeCases:
         wb.save(buffer)
         buffer.seek(0)
 
-        files = {"file": ("rates.xlsx", buffer, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")}
+        files = {
+            "file": (
+                "rates.xlsx",
+                buffer,
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            )
+        }
         response = await test_client.post("/rates", files=files)
 
         # Should ignore extra columns and succeed
         assert response.status_code == 200
 
     @pytest.mark.asyncio
-    async def test_upload_rates_case_sensitivity(self, test_client: AsyncClient, clean_database):
+    async def test_upload_rates_case_sensitivity(
+        self, test_client: AsyncClient, clean_database
+    ):
         """Test if product names are case-sensitive."""
         wb = openpyxl.Workbook()
         ws = wb.active
@@ -370,7 +494,13 @@ class TestRatesAPIEdgeCases:
         wb.save(buffer)
         buffer.seek(0)
 
-        files = {"file": ("rates.xlsx", buffer, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")}
+        files = {
+            "file": (
+                "rates.xlsx",
+                buffer,
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            )
+        }
         response = await test_client.post("/rates", files=files)
 
         assert response.status_code == 200
@@ -381,7 +511,9 @@ class TestRatesAPIEdgeCases:
         assert len(rates) == 2
 
     @pytest.mark.asyncio
-    async def test_get_rates_excel_content_verification(self, test_client: AsyncClient, sample_rates):
+    async def test_get_rates_excel_content_verification(
+        self, test_client: AsyncClient, sample_rates
+    ):
         """Test Excel download contains correct data."""
         response = await test_client.get("/rates?format=excel")
 
@@ -394,7 +526,9 @@ class TestRatesAPIEdgeCases:
         assert row_count == 3  # sample_rates has 3 entries
 
     @pytest.mark.asyncio
-    async def test_upload_then_download_roundtrip(self, test_client: AsyncClient, clean_database):
+    async def test_upload_then_download_roundtrip(
+        self, test_client: AsyncClient, clean_database
+    ):
         """Test uploading rates and downloading them back."""
         # Upload
         wb = openpyxl.Workbook()
@@ -407,7 +541,13 @@ class TestRatesAPIEdgeCases:
         wb.save(buffer)
         buffer.seek(0)
 
-        files = {"file": ("rates.xlsx", buffer, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")}
+        files = {
+            "file": (
+                "rates.xlsx",
+                buffer,
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            )
+        }
         upload_response = await test_client.post("/rates", files=files)
         assert upload_response.status_code == 200
 

@@ -1,6 +1,6 @@
-from pydantic import BaseModel, Field, validator
 from typing import List, Optional, Union
-from datetime import datetime
+
+from pydantic import BaseModel, Field
 
 
 # Base response models
@@ -70,19 +70,19 @@ class ProductSummary(BaseModel):
     product: str
     count: str  # String as per API spec
     amount: int  # Net weight in kg
-    rate: int   # Rate in agorot
-    pay: int    # Payment amount in agorot
+    rate: int  # Rate in agorot
+    pay: int  # Payment amount in agorot
 
 
 class BillResponse(BaseModel):
     id: str  # Provider ID as string
     name: str  # Provider name
     from_: str = Field(..., alias="from")  # Start timestamp
-    to: str    # End timestamp
+    to: str  # End timestamp
     truckCount: int
     sessionCount: int
     products: List[ProductSummary]
     total: int  # Total payment in agorot
-    
+
     class Config:
         populate_by_name = True

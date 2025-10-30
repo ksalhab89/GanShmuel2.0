@@ -1,14 +1,15 @@
 """Tests for custom exceptions."""
+
 import pytest
 
 from src.utils.exceptions import (
     BillingServiceException,
     DatabaseError,
-    ValidationError,
-    NotFoundError,
     DuplicateError,
+    FileError,
+    NotFoundError,
+    ValidationError,
     WeightServiceError,
-    FileError
 )
 
 
@@ -216,7 +217,7 @@ class TestExceptionHierarchy:
             NotFoundError,
             DuplicateError,
             WeightServiceError,
-            FileError
+            FileError,
         ]
 
         for exc_class in exceptions:
@@ -230,7 +231,7 @@ class TestExceptionHierarchy:
             NotFoundError("Not found"),
             DuplicateError("Duplicate"),
             WeightServiceError("Service error"),
-            FileError("File error")
+            FileError("File error"),
         ]
 
         for exc in exceptions:
@@ -258,7 +259,7 @@ class TestExceptionHierarchy:
             (NotFoundError("Missing"), "Missing"),
             (DuplicateError("Exists"), "Exists"),
             (WeightServiceError("Unavailable"), "Unavailable"),
-            (FileError("Not found"), "Not found")
+            (FileError("Not found"), "Not found"),
         ]
 
         for exc, expected_message in exceptions_with_messages:
@@ -270,6 +271,7 @@ class TestExceptionInRealScenarios:
 
     def test_database_connection_failure_scenario(self):
         """Test database connection failure scenario."""
+
         def connect_to_database():
             raise DatabaseError("Cannot connect to MySQL on port 3307")
 
@@ -280,6 +282,7 @@ class TestExceptionInRealScenarios:
 
     def test_provider_not_found_scenario(self):
         """Test provider not found scenario."""
+
         def get_provider(provider_id):
             raise NotFoundError(f"Provider {provider_id} not found")
 
@@ -290,6 +293,7 @@ class TestExceptionInRealScenarios:
 
     def test_duplicate_truck_scenario(self):
         """Test duplicate truck registration scenario."""
+
         def register_truck(truck_id):
             raise DuplicateError(f"Truck {truck_id} already registered")
 
@@ -300,8 +304,9 @@ class TestExceptionInRealScenarios:
 
     def test_excel_file_validation_scenario(self):
         """Test Excel file validation scenario."""
+
         def validate_excel_file(filename):
-            raise FileError(f"Excel file must contain columns: Product, Rate, Scope")
+            raise FileError("Excel file must contain columns: Product, Rate, Scope")
 
         with pytest.raises(FileError) as exc_info:
             validate_excel_file("rates.xlsx")
@@ -310,6 +315,7 @@ class TestExceptionInRealScenarios:
 
     def test_weight_service_timeout_scenario(self):
         """Test weight service timeout scenario."""
+
         def fetch_weights():
             raise WeightServiceError("Weight service timeout after 30 seconds")
 

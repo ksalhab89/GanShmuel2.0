@@ -1,8 +1,11 @@
 """Tests for bill service core business logic - CRITICAL for financial calculations."""
+
+from unittest.mock import AsyncMock, patch
+
 import pytest
-from unittest.mock import AsyncMock, patch, MagicMock
+
+from src.models.database import Rate, Truck
 from src.services.bill_service import BillService
-from src.models.database import Provider, Truck, Rate
 from src.utils.exceptions import NotFoundError
 
 
@@ -18,10 +21,12 @@ class TestBillServiceCalculations:
         Provider rate MUST override general rate.
         """
         # Setup mock data
-        mock_weight_service.set_transactions([
-            {"truck": "ABC123", "neto": 1000, "produce": "apples"},
-            {"truck": "ABC123", "neto": 1500, "produce": "apples"},
-        ])
+        mock_weight_service.set_transactions(
+            [
+                {"truck": "ABC123", "neto": 1000, "produce": "apples"},
+                {"truck": "ABC123", "neto": 1500, "produce": "apples"},
+            ]
+        )
 
         # Mock repositories
         service = BillService()
@@ -30,11 +35,11 @@ class TestBillServiceCalculations:
         service.rate_repo.get_all = AsyncMock(return_value=[sample_provider_rate])
 
         # Patch weight client
-        with patch.object(service, 'weight_client', mock_weight_service):
+        with patch.object(service, "weight_client", mock_weight_service):
             bill = await service.generate_bill(
                 provider_id=sample_provider.id,
                 from_date="20250101000000",
-                to_date="20251231235959"
+                to_date="20251231235959",
             )
 
         # Provider rate is 6, total neto is 2500kg
@@ -55,9 +60,11 @@ class TestBillServiceCalculations:
         CRITICAL: Verify bill uses general rate when no provider-specific rate exists.
         """
         # Setup mock data
-        mock_weight_service.set_transactions([
-            {"truck": "ABC123", "neto": 2000, "produce": "apples"},
-        ])
+        mock_weight_service.set_transactions(
+            [
+                {"truck": "ABC123", "neto": 2000, "produce": "apples"},
+            ]
+        )
 
         # Mock repositories
         service = BillService()
@@ -66,11 +73,11 @@ class TestBillServiceCalculations:
         service.rate_repo.get_all = AsyncMock(return_value=[sample_rate])
 
         # Patch weight client
-        with patch.object(service, 'weight_client', mock_weight_service):
+        with patch.object(service, "weight_client", mock_weight_service):
             bill = await service.generate_bill(
                 provider_id=sample_provider.id,
                 from_date="20250101000000",
-                to_date="20251231235959"
+                to_date="20251231235959",
             )
 
         # General rate is 5, total neto is 2000kg
@@ -107,12 +114,14 @@ class TestBillServiceCalculations:
         Each product should have separate totals.
         """
         # Setup mock data with multiple products
-        mock_weight_service.set_transactions([
-            {"truck": "ABC123", "neto": 1000, "produce": "apples"},
-            {"truck": "ABC123", "neto": 1500, "produce": "apples"},
-            {"truck": "ABC123", "neto": 2000, "produce": "oranges"},
-            {"truck": "ABC123", "neto": 1000, "produce": "oranges"},
-        ])
+        mock_weight_service.set_transactions(
+            [
+                {"truck": "ABC123", "neto": 1000, "produce": "apples"},
+                {"truck": "ABC123", "neto": 1500, "produce": "apples"},
+                {"truck": "ABC123", "neto": 2000, "produce": "oranges"},
+                {"truck": "ABC123", "neto": 1000, "produce": "oranges"},
+            ]
+        )
 
         # Mock repositories
         service = BillService()
@@ -121,11 +130,11 @@ class TestBillServiceCalculations:
         service.rate_repo.get_all = AsyncMock(return_value=multiple_rates)
 
         # Patch weight client
-        with patch.object(service, 'weight_client', mock_weight_service):
+        with patch.object(service, "weight_client", mock_weight_service):
             bill = await service.generate_bill(
                 provider_id=sample_provider.id,
                 from_date="20250101000000",
-                to_date="20251231235959"
+                to_date="20251231235959",
             )
 
         # Verify we have 2 products
@@ -150,17 +159,24 @@ class TestBillServiceCalculations:
 
     @pytest.mark.asyncio
     async def test_calculate_bill_multiple_trucks(
-        self, mock_weight_service, sample_provider, sample_truck, sample_truck_2, sample_rate
+        self,
+        mock_weight_service,
+        sample_provider,
+        sample_truck,
+        sample_truck_2,
+        sample_rate,
     ):
         """
         Test bill calculation for provider with multiple trucks.
         All trucks should be included in the bill.
         """
         # Setup mock data for multiple trucks
-        mock_weight_service.set_transactions([
-            {"truck": "ABC123", "neto": 1000, "produce": "apples"},
-            {"truck": "XYZ789", "neto": 2000, "produce": "apples"},
-        ])
+        mock_weight_service.set_transactions(
+            [
+                {"truck": "ABC123", "neto": 1000, "produce": "apples"},
+                {"truck": "XYZ789", "neto": 2000, "produce": "apples"},
+            ]
+        )
 
         # Mock repositories
         service = BillService()
@@ -171,11 +187,11 @@ class TestBillServiceCalculations:
         service.rate_repo.get_all = AsyncMock(return_value=[sample_rate])
 
         # Patch weight client
-        with patch.object(service, 'weight_client', mock_weight_service):
+        with patch.object(service, "weight_client", mock_weight_service):
             bill = await service.generate_bill(
                 provider_id=sample_provider.id,
                 from_date="20250101000000",
-                to_date="20251231235959"
+                to_date="20251231235959",
             )
 
         # Both trucks should be counted
@@ -186,20 +202,31 @@ class TestBillServiceCalculations:
 
     @pytest.mark.asyncio
     async def test_calculate_bill_filters_other_provider_trucks(
-        self, mock_weight_service, sample_provider, sample_provider_2, sample_truck, sample_rate
+        self,
+        mock_weight_service,
+        sample_provider,
+        sample_provider_2,
+        sample_truck,
+        sample_rate,
     ):
         """
         CRITICAL: Verify bill only includes transactions for provider's own trucks.
         Must not include other providers' transactions.
         """
         # Create truck for another provider
-        other_truck = Truck(id="OTHER123", provider_id=sample_provider_2.id)
+        _other_truck = Truck(id="OTHER123", provider_id=sample_provider_2.id)
 
         # Setup mock data with both providers' trucks
-        mock_weight_service.set_transactions([
-            {"truck": "ABC123", "neto": 1000, "produce": "apples"},  # Our provider
-            {"truck": "OTHER123", "neto": 5000, "produce": "apples"},  # Other provider
-        ])
+        mock_weight_service.set_transactions(
+            [
+                {"truck": "ABC123", "neto": 1000, "produce": "apples"},  # Our provider
+                {
+                    "truck": "OTHER123",
+                    "neto": 5000,
+                    "produce": "apples",
+                },  # Other provider
+            ]
+        )
 
         # Mock repositories
         service = BillService()
@@ -208,11 +235,11 @@ class TestBillServiceCalculations:
         service.rate_repo.get_all = AsyncMock(return_value=[sample_rate])
 
         # Patch weight client
-        with patch.object(service, 'weight_client', mock_weight_service):
+        with patch.object(service, "weight_client", mock_weight_service):
             bill = await service.generate_bill(
                 provider_id=sample_provider.id,
                 from_date="20250101000000",
-                to_date="20251231235959"
+                to_date="20251231235959",
             )
 
         # Should only include our provider's truck
@@ -228,11 +255,13 @@ class TestBillServiceCalculations:
         Test that transactions with neto='na' are skipped in calculations.
         """
         # Setup mock data with 'na' neto values
-        mock_weight_service.set_transactions([
-            {"truck": "ABC123", "neto": 1000, "produce": "apples"},
-            {"truck": "ABC123", "neto": "na", "produce": "apples"},  # Should skip
-            {"truck": "ABC123", "neto": 2000, "produce": "apples"},
-        ])
+        mock_weight_service.set_transactions(
+            [
+                {"truck": "ABC123", "neto": 1000, "produce": "apples"},
+                {"truck": "ABC123", "neto": "na", "produce": "apples"},  # Should skip
+                {"truck": "ABC123", "neto": 2000, "produce": "apples"},
+            ]
+        )
 
         # Mock repositories
         service = BillService()
@@ -241,11 +270,11 @@ class TestBillServiceCalculations:
         service.rate_repo.get_all = AsyncMock(return_value=[sample_rate])
 
         # Patch weight client
-        with patch.object(service, 'weight_client', mock_weight_service):
+        with patch.object(service, "weight_client", mock_weight_service):
             bill = await service.generate_bill(
                 provider_id=sample_provider.id,
                 from_date="20250101000000",
-                to_date="20251231235959"
+                to_date="20251231235959",
             )
 
         # Should only count 2 sessions (skip 'na')
@@ -261,11 +290,13 @@ class TestBillServiceCalculations:
         Test that transactions with produce='na' are skipped in calculations.
         """
         # Setup mock data with 'na' produce values
-        mock_weight_service.set_transactions([
-            {"truck": "ABC123", "neto": 1000, "produce": "apples"},
-            {"truck": "ABC123", "neto": 2000, "produce": "na"},  # Should skip
-            {"truck": "ABC123", "neto": 1500, "produce": "apples"},
-        ])
+        mock_weight_service.set_transactions(
+            [
+                {"truck": "ABC123", "neto": 1000, "produce": "apples"},
+                {"truck": "ABC123", "neto": 2000, "produce": "na"},  # Should skip
+                {"truck": "ABC123", "neto": 1500, "produce": "apples"},
+            ]
+        )
 
         # Mock repositories
         service = BillService()
@@ -274,11 +305,11 @@ class TestBillServiceCalculations:
         service.rate_repo.get_all = AsyncMock(return_value=[sample_rate])
 
         # Patch weight client
-        with patch.object(service, 'weight_client', mock_weight_service):
+        with patch.object(service, "weight_client", mock_weight_service):
             bill = await service.generate_bill(
                 provider_id=sample_provider.id,
                 from_date="20250101000000",
-                to_date="20251231235959"
+                to_date="20251231235959",
             )
 
         # Should only count apples (skip 'na' produce)
@@ -294,10 +325,12 @@ class TestBillServiceCalculations:
         Test that transactions for products without rates are skipped.
         """
         # Setup mock data with product that has no rate
-        mock_weight_service.set_transactions([
-            {"truck": "ABC123", "neto": 1000, "produce": "apples"},
-            {"truck": "ABC123", "neto": 2000, "produce": "bananas"},  # No rate
-        ])
+        mock_weight_service.set_transactions(
+            [
+                {"truck": "ABC123", "neto": 1000, "produce": "apples"},
+                {"truck": "ABC123", "neto": 2000, "produce": "bananas"},  # No rate
+            ]
+        )
 
         # Only apples rate
         apples_rate = Rate(product_id="apples", rate=5, scope="ALL")
@@ -309,11 +342,11 @@ class TestBillServiceCalculations:
         service.rate_repo.get_all = AsyncMock(return_value=[apples_rate])
 
         # Patch weight client
-        with patch.object(service, 'weight_client', mock_weight_service):
+        with patch.object(service, "weight_client", mock_weight_service):
             bill = await service.generate_bill(
                 provider_id=sample_provider.id,
                 from_date="20250101000000",
-                to_date="20251231235959"
+                to_date="20251231235959",
             )
 
         # Should only count apples (bananas has no rate)
@@ -340,11 +373,11 @@ class TestBillServiceCalculations:
         service.rate_repo.get_all = AsyncMock(return_value=[sample_rate])
 
         # Patch weight client
-        with patch.object(service, 'weight_client', mock_weight_service):
+        with patch.object(service, "weight_client", mock_weight_service):
             bill = await service.generate_bill(
                 provider_id=sample_provider.id,
                 from_date="20250101000000",
-                to_date="20250101235959"
+                to_date="20250101235959",
             )
 
         # Should have zero values
@@ -362,9 +395,7 @@ class TestBillServiceCalculations:
 
         with pytest.raises(NotFoundError, match="Provider not found"):
             await service.generate_bill(
-                provider_id=999,
-                from_date="20250101000000",
-                to_date="20251231235959"
+                provider_id=999, from_date="20250101000000", to_date="20251231235959"
             )
 
     @pytest.mark.asyncio
@@ -381,13 +412,15 @@ class TestBillServiceCalculations:
 
         # Mock weight client to raise exception
         mock_client = AsyncMock()
-        mock_client.get_transactions = AsyncMock(side_effect=Exception("Service unavailable"))
+        mock_client.get_transactions = AsyncMock(
+            side_effect=Exception("Service unavailable")
+        )
 
-        with patch.object(service, 'weight_client', mock_client):
+        with patch.object(service, "weight_client", mock_client):
             bill = await service.generate_bill(
                 provider_id=sample_provider.id,
                 from_date="20250101000000",
-                to_date="20251231235959"
+                to_date="20251231235959",
             )
 
         # Should return empty bill
@@ -499,11 +532,13 @@ class TestBillServiceProductSummary:
         Test that product count is returned as string as per API spec.
         """
         # Setup mock data
-        mock_weight_service.set_transactions([
-            {"truck": "ABC123", "neto": 1000, "produce": "apples"},
-            {"truck": "ABC123", "neto": 1500, "produce": "apples"},
-            {"truck": "ABC123", "neto": 2000, "produce": "apples"},
-        ])
+        mock_weight_service.set_transactions(
+            [
+                {"truck": "ABC123", "neto": 1000, "produce": "apples"},
+                {"truck": "ABC123", "neto": 1500, "produce": "apples"},
+                {"truck": "ABC123", "neto": 2000, "produce": "apples"},
+            ]
+        )
 
         # Mock repositories
         service = BillService()
@@ -512,11 +547,11 @@ class TestBillServiceProductSummary:
         service.rate_repo.get_all = AsyncMock(return_value=[sample_rate])
 
         # Patch weight client
-        with patch.object(service, 'weight_client', mock_weight_service):
+        with patch.object(service, "weight_client", mock_weight_service):
             bill = await service.generate_bill(
                 provider_id=sample_provider.id,
                 from_date="20250101000000",
-                to_date="20251231235959"
+                to_date="20251231235959",
             )
 
         # Count should be string "3"
@@ -531,11 +566,13 @@ class TestBillServiceProductSummary:
         Test that product summary correctly aggregates multiple transactions.
         """
         # Setup mock data
-        mock_weight_service.set_transactions([
-            {"truck": "ABC123", "neto": 1000, "produce": "apples"},
-            {"truck": "ABC123", "neto": 1500, "produce": "apples"},
-            {"truck": "ABC123", "neto": 2500, "produce": "apples"},
-        ])
+        mock_weight_service.set_transactions(
+            [
+                {"truck": "ABC123", "neto": 1000, "produce": "apples"},
+                {"truck": "ABC123", "neto": 1500, "produce": "apples"},
+                {"truck": "ABC123", "neto": 2500, "produce": "apples"},
+            ]
+        )
 
         # Mock repositories
         service = BillService()
@@ -544,11 +581,11 @@ class TestBillServiceProductSummary:
         service.rate_repo.get_all = AsyncMock(return_value=[sample_rate])
 
         # Patch weight client
-        with patch.object(service, 'weight_client', mock_weight_service):
+        with patch.object(service, "weight_client", mock_weight_service):
             bill = await service.generate_bill(
                 provider_id=sample_provider.id,
                 from_date="20250101000000",
-                to_date="20251231235959"
+                to_date="20251231235959",
             )
 
         product = bill.products[0]

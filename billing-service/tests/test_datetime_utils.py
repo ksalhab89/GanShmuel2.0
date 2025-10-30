@@ -1,12 +1,10 @@
 """Tests for datetime utility functions."""
+
+
 import pytest
-from datetime import datetime
 from freezegun import freeze_time
 
-from src.utils.datetime_utils import (
-    get_default_date_range,
-    validate_timestamp_format
-)
+from src.utils.datetime_utils import get_default_date_range, validate_timestamp_format
 
 
 class TestGetDefaultDateRange:

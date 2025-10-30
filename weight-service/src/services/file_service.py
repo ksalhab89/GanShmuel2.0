@@ -4,12 +4,12 @@ import csv
 import json
 import os
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..models.schemas import BatchUploadResponse, ContainerWeightData
-from ..utils.calculations import normalize_weight_to_kg, validate_weight_range
+from ..utils.calculations import validate_weight_range
 from .container_service import ContainerService
 
 
@@ -108,10 +108,6 @@ class FileService:
         
         try:
             with open(file_path, 'r', newline='', encoding='utf-8') as csvfile:
-                # Try to detect if file has headers
-                sample = csvfile.read(1024)
-                csvfile.seek(0)
-                
                 # Check if first line looks like headers
                 first_line = csvfile.readline().strip()
                 csvfile.seek(0)
@@ -326,7 +322,7 @@ class FileService:
         # Check file extension
         filename = os.path.basename(file_path)
         if not (filename.lower().endswith('.csv') or filename.lower().endswith('.json')):
-            raise FileValidationError(f"Invalid file format. Must be .csv or .json")
+            raise FileValidationError("Invalid file format. Must be .csv or .json")
         
         # Security check: prevent path traversal
         if '..' in file_path or file_path.startswith('/'):

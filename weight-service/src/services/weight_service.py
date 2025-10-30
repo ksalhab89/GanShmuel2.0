@@ -1,13 +1,12 @@
 """Core weighing business logic service."""
 
 import uuid
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional, Tuple
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..models.database import Transaction
 from ..models.repositories import ContainerRepository, SessionRepository, TransactionRepository
-from ..models.schemas import ContainerWeightInfo, WeightRequest, WeightResponse
+from ..models.schemas import WeightRequest, WeightResponse
 from ..utils.calculations import (
     calculate_net_weight,
     calculate_truck_tara,
@@ -135,9 +134,9 @@ class WeightService:
         
         # Normalize weight to kg
         bruto_kg = normalize_weight_to_kg(request.weight, request.unit)
-        
+
         # Create IN transaction
-        transaction = await self.transaction_repo.create(
+        _transaction = await self.transaction_repo.create(
             session_id=session_id,
             direction="in",
             truck=request.truck if request.truck != "na" else None,
@@ -145,7 +144,7 @@ class WeightService:
             bruto=bruto_kg,
             produce=request.produce if request.produce != "na" else None
         )
-        
+
         await self.session.commit()
         
         # Return response
@@ -243,9 +242,9 @@ class WeightService:
         
         # Normalize weight to kg
         bruto_kg = normalize_weight_to_kg(request.weight, request.unit)
-        
+
         # Create NONE transaction
-        transaction = await self.transaction_repo.create(
+        _transaction = await self.transaction_repo.create(
             session_id=session_id,
             direction="none",
             truck=request.truck if request.truck != "na" else None,
@@ -253,7 +252,7 @@ class WeightService:
             bruto=bruto_kg,
             produce=request.produce if request.produce != "na" else None
         )
-        
+
         await self.session.commit()
         
         return WeightResponse(
@@ -284,9 +283,9 @@ class WeightService:
         
         # Normalize weight to kg
         bruto_kg = normalize_weight_to_kg(request.weight, request.unit)
-        
+
         # Create OUT transaction without calculations
-        transaction = await self.transaction_repo.create(
+        _transaction = await self.transaction_repo.create(
             session_id=session_id,
             direction="out",
             truck=request.truck if request.truck != "na" else None,
@@ -294,7 +293,7 @@ class WeightService:
             bruto=bruto_kg,
             produce=request.produce if request.produce != "na" else None
         )
-        
+
         await self.session.commit()
         
         return WeightResponse(

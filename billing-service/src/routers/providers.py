@@ -1,8 +1,10 @@
-from fastapi import APIRouter, HTTPException
-from ..models.schemas import ProviderCreate, ProviderUpdate, ProviderResponse
-from ..models.repositories import ProviderRepository
-from ..utils.exceptions import NotFoundError, DuplicateError
 import logging
+
+from fastapi import APIRouter, HTTPException
+
+from ..models.repositories import ProviderRepository
+from ..models.schemas import ProviderCreate, ProviderResponse, ProviderUpdate
+from ..utils.exceptions import DuplicateError, NotFoundError
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -13,15 +15,15 @@ provider_repo = ProviderRepository()
 async def create_provider(provider_data: ProviderCreate):
     """
     Create a new provider.
-    
+
     - **name**: Provider name (required, must be unique)
-    
+
     Returns the created provider with ID and name.
     """
     try:
         provider = await provider_repo.create(provider_data.name)
         return ProviderResponse(id=provider.id, name=provider.name)
-        
+
     except DuplicateError as e:
         logger.warning(f"Attempt to create duplicate provider: {provider_data.name}")
         raise HTTPException(status_code=409, detail=str(e))
@@ -34,21 +36,23 @@ async def create_provider(provider_data: ProviderCreate):
 async def update_provider(provider_id: int, provider_data: ProviderUpdate):
     """
     Update an existing provider's name.
-    
+
     - **provider_id**: ID of the provider to update
     - **name**: New provider name (required, must be unique)
-    
+
     Returns the updated provider with ID and name.
     """
     try:
         provider = await provider_repo.update(provider_id, provider_data.name)
         return ProviderResponse(id=provider.id, name=provider.name)
-        
+
     except NotFoundError as e:
         logger.warning(f"Attempt to update non-existent provider: {provider_id}")
         raise HTTPException(status_code=404, detail=str(e))
     except DuplicateError as e:
-        logger.warning(f"Attempt to update provider {provider_id} with duplicate name: {provider_data.name}")
+        logger.warning(
+            f"Attempt to update provider {provider_id} with duplicate name: {provider_data.name}"
+        )
         raise HTTPException(status_code=409, detail=str(e))
     except Exception as e:
         logger.error(f"Error updating provider {provider_id}: {e}")

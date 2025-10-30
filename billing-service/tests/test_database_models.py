@@ -2,10 +2,11 @@
 
 Tests database model relationships, constraints, and data integrity.
 """
-import pytest
-from dataclasses import FrozenInstanceError
 
-from src.models.database import Provider, Truck, Rate, WeightTransaction, WeightItem
+
+import pytest
+
+from src.models.database import Provider, Rate, Truck, WeightItem, WeightTransaction
 
 
 class TestProviderModel:
@@ -24,8 +25,8 @@ class TestProviderModel:
 
         # Dataclasses are immutable (frozen=True would be needed)
         # This test verifies the model structure
-        assert hasattr(provider, 'id')
-        assert hasattr(provider, 'name')
+        assert hasattr(provider, "id")
+        assert hasattr(provider, "name")
 
     def test_provider_with_none_id(self):
         """Test creating provider with None id (before insertion)."""
@@ -160,7 +161,7 @@ class TestWeightTransactionModel:
             produce="apples",
             truck="ABC123",
             containers=["c1", "c2"],
-            timestamp="20250101120000"
+            timestamp="20250101120000",
         )
 
         assert transaction.id == "tr123"
@@ -178,7 +179,7 @@ class TestWeightTransactionModel:
             produce="apples",
             truck="ABC123",
             containers=[],
-            timestamp="20250101120000"
+            timestamp="20250101120000",
         )
 
         assert transaction.neto == "na"
@@ -193,7 +194,7 @@ class TestWeightTransactionModel:
             produce="apples",
             truck="ABC123",
             containers=["c1", "c2", "c3"],
-            timestamp="20250101140000"
+            timestamp="20250101140000",
         )
 
         assert transaction.direction == "out"
@@ -210,7 +211,7 @@ class TestWeightTransactionModel:
             produce="apples",
             truck="ABC123",
             containers=[],
-            timestamp="20250101120000"
+            timestamp="20250101120000",
         )
 
         assert transaction.containers == []
@@ -225,7 +226,7 @@ class TestWeightTransactionModel:
             produce="apples",
             truck="ABC123",
             containers=["c1"],
-            timestamp="20250101120000"
+            timestamp="20250101120000",
         )
         repr_str = repr(transaction)
 
@@ -237,11 +238,7 @@ class TestWeightItemModel:
 
     def test_weight_item_creation(self):
         """Test creating a WeightItem instance."""
-        item = WeightItem(
-            id="ABC123",
-            tara=10000,
-            sessions=["sess1", "sess2"]
-        )
+        item = WeightItem(id="ABC123", tara=10000, sessions=["sess1", "sess2"])
 
         assert item.id == "ABC123"
         assert item.tara == 10000
@@ -249,41 +246,25 @@ class TestWeightItemModel:
 
     def test_weight_item_with_na_tara(self):
         """Test item with 'na' tara value."""
-        item = WeightItem(
-            id="XYZ789",
-            tara="na",
-            sessions=[]
-        )
+        item = WeightItem(id="XYZ789", tara="na", sessions=[])
 
         assert item.tara == "na"
 
     def test_weight_item_no_sessions(self):
         """Test item without sessions."""
-        item = WeightItem(
-            id="DEF456",
-            tara=10000,
-            sessions=[]
-        )
+        item = WeightItem(id="DEF456", tara=10000, sessions=[])
 
         assert item.sessions == []
 
     def test_weight_item_multiple_sessions(self):
         """Test item with multiple sessions."""
-        item = WeightItem(
-            id="GHI789",
-            tara=10000,
-            sessions=["s1", "s2", "s3", "s4"]
-        )
+        item = WeightItem(id="GHI789", tara=10000, sessions=["s1", "s2", "s3", "s4"])
 
         assert len(item.sessions) == 4
 
     def test_weight_item_repr(self):
         """Test item string representation."""
-        item = WeightItem(
-            id="ABC123",
-            tara=10000,
-            sessions=["sess1"]
-        )
+        item = WeightItem(id="ABC123", tara=10000, sessions=["sess1"])
         repr_str = repr(item)
 
         assert "WeightItem" in repr_str
@@ -305,12 +286,14 @@ class TestModelRelationships:
         # Create truck for provider
         cursor.execute(
             "INSERT INTO Trucks (id, provider_id) VALUES (%s, %s)",
-            ("TRUCK001", provider_id)
+            ("TRUCK001", provider_id),
         )
         db_connection.commit()
 
         # Verify relationship
-        cursor.execute("SELECT id, provider_id FROM Trucks WHERE id = %s", ("TRUCK001",))
+        cursor.execute(
+            "SELECT id, provider_id FROM Trucks WHERE id = %s", ("TRUCK001",)
+        )
         result = cursor.fetchone()
 
         assert result[0] == "TRUCK001"
@@ -346,7 +329,7 @@ class TestModelRelationships:
         with pytest.raises(Exception):  # MySQL foreign key constraint
             cursor.execute(
                 "INSERT INTO Trucks (id, provider_id) VALUES (%s, %s)",
-                ("INVALID", 99999)
+                ("INVALID", 99999),
             )
             db_connection.commit()
 
@@ -361,7 +344,7 @@ class TestModelRelationships:
         # Insert first truck
         cursor.execute(
             "INSERT INTO Trucks (id, provider_id) VALUES (%s, %s)",
-            ("DUPLICATE", sample_provider.id)
+            ("DUPLICATE", sample_provider.id),
         )
         db_connection.commit()
 
@@ -369,7 +352,7 @@ class TestModelRelationships:
         with pytest.raises(Exception):  # MySQL primary key constraint
             cursor.execute(
                 "INSERT INTO Trucks (id, provider_id) VALUES (%s, %s)",
-                ("DUPLICATE", sample_provider.id)
+                ("DUPLICATE", sample_provider.id),
             )
             db_connection.commit()
 
@@ -384,13 +367,13 @@ class TestModelRelationships:
         # Insert general rate
         cursor.execute(
             "INSERT INTO Rates (product_id, rate, scope) VALUES (%s, %s, %s)",
-            ("apples", 5, "ALL")
+            ("apples", 5, "ALL"),
         )
 
         # Insert provider-specific rate for same product
         cursor.execute(
             "INSERT INTO Rates (product_id, rate, scope) VALUES (%s, %s, %s)",
-            ("apples", 7, "123")
+            ("apples", 7, "123"),
         )
 
         db_connection.commit()
@@ -405,14 +388,16 @@ class TestModelRelationships:
 
     @pytest.mark.asyncio
     @pytest.mark.skip(reason="TODO: Fix later")
-    async def test_cascade_behavior_on_provider_delete(self, db_connection, sample_provider):
+    async def test_cascade_behavior_on_provider_delete(
+        self, db_connection, sample_provider
+    ):
         """Test what happens to trucks when provider is deleted."""
         cursor = db_connection.cursor()
 
         # Create truck for provider
         cursor.execute(
             "INSERT INTO Trucks (id, provider_id) VALUES (%s, %s)",
-            ("CASCADE_TEST", sample_provider.id)
+            ("CASCADE_TEST", sample_provider.id),
         )
         db_connection.commit()
 
@@ -441,7 +426,7 @@ class TestDataIntegrity:
 
             # If it succeeds, verify it was inserted
             cursor.execute("SELECT name FROM Provider WHERE name = %s", ("",))
-            result = cursor.fetchone()
+            cursor.fetchone()
             # Empty string handling depends on schema constraints
             cursor.close()
         except Exception:
@@ -457,7 +442,7 @@ class TestDataIntegrity:
         # Insert truck with max length ID (10 chars)
         cursor.execute(
             "INSERT INTO Trucks (id, provider_id) VALUES (%s, %s)",
-            ("1234567890", sample_provider.id)
+            ("1234567890", sample_provider.id),
         )
         db_connection.commit()
 
@@ -470,7 +455,7 @@ class TestDataIntegrity:
         with pytest.raises(Exception):  # MySQL data too long error
             cursor.execute(
                 "INSERT INTO Trucks (id, provider_id) VALUES (%s, %s)",
-                ("12345678901", sample_provider.id)
+                ("12345678901", sample_provider.id),
             )
             db_connection.commit()
 
@@ -484,11 +469,13 @@ class TestDataIntegrity:
 
         cursor.execute(
             "INSERT INTO Rates (product_id, rate, scope) VALUES (%s, %s, %s)",
-            ("discount_item", -100, "ALL")
+            ("discount_item", -100, "ALL"),
         )
         db_connection.commit()
 
-        cursor.execute("SELECT rate FROM Rates WHERE product_id = %s", ("discount_item",))
+        cursor.execute(
+            "SELECT rate FROM Rates WHERE product_id = %s", ("discount_item",)
+        )
         result = cursor.fetchone()
 
         assert result[0] == -100
@@ -502,7 +489,7 @@ class TestDataIntegrity:
 
         cursor.execute(
             "INSERT INTO Rates (product_id, rate, scope) VALUES (%s, %s, %s)",
-            ("free_item", 0, "ALL")
+            ("free_item", 0, "ALL"),
         )
         db_connection.commit()
 
@@ -538,16 +525,19 @@ class TestDataIntegrity:
         # Insert rates with different cases
         cursor.execute(
             "INSERT INTO Rates (product_id, rate, scope) VALUES (%s, %s, %s)",
-            ("Apples", 5, "ALL")
+            ("Apples", 5, "ALL"),
         )
         cursor.execute(
             "INSERT INTO Rates (product_id, rate, scope) VALUES (%s, %s, %s)",
-            ("apples", 6, "ALL")
+            ("apples", 6, "ALL"),
         )
         db_connection.commit()
 
         # Both should exist (case-sensitive)
-        cursor.execute("SELECT COUNT(*) FROM Rates WHERE product_id IN (%s, %s)", ("Apples", "apples"))
+        cursor.execute(
+            "SELECT COUNT(*) FROM Rates WHERE product_id IN (%s, %s)",
+            ("Apples", "apples"),
+        )
         count = cursor.fetchone()[0]
 
         # MySQL string comparison depends on collation

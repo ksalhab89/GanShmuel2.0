@@ -3,16 +3,17 @@
 Tests all repository CRUD operations, edge cases, and database interactions.
 Ensures 95%+ coverage of repository layer.
 """
-import pytest
-from typing import List
 
+
+import pytest
+
+from src.models.database import Rate
 from src.models.repositories import (
     ProviderRepository,
-    TruckRepository,
     RateRepository,
+    TruckRepository,
 )
-from src.models.database import Provider, Truck, Rate
-from src.utils.exceptions import NotFoundError, DuplicateError
+from src.utils.exceptions import DuplicateError, NotFoundError
 
 
 class TestProviderRepository:
@@ -25,9 +26,12 @@ class TestProviderRepository:
 
         # Patch execute_query to use test database
         from src import database
+
         original_execute_query = database.execute_query
 
-        async def test_execute_query(query, params=None, fetch_one=False, fetch_all=False):
+        async def test_execute_query(
+            query, params=None, fetch_one=False, fetch_all=False
+        ):
             cursor = db_connection.cursor(dictionary=True)
             cursor.execute(query, params or ())
 
@@ -41,7 +45,10 @@ class TestProviderRepository:
                 return result
             else:
                 db_connection.commit()
-                result = {"affected_rows": cursor.rowcount, "last_insert_id": cursor.lastrowid}
+                result = {
+                    "affected_rows": cursor.rowcount,
+                    "last_insert_id": cursor.lastrowid,
+                }
                 cursor.close()
                 return result
 
@@ -62,9 +69,12 @@ class TestProviderRepository:
         repo = ProviderRepository()
 
         from src import database
+
         original_execute_query = database.execute_query
 
-        async def test_execute_query(query, params=None, fetch_one=False, fetch_all=False):
+        async def test_execute_query(
+            query, params=None, fetch_one=False, fetch_all=False
+        ):
             cursor = db_connection.cursor(dictionary=True)
             cursor.execute(query, params or ())
 
@@ -78,7 +88,10 @@ class TestProviderRepository:
                 return result
             else:
                 db_connection.commit()
-                result = {"affected_rows": cursor.rowcount, "last_insert_id": cursor.lastrowid}
+                result = {
+                    "affected_rows": cursor.rowcount,
+                    "last_insert_id": cursor.lastrowid,
+                }
                 cursor.close()
                 return result
 
@@ -100,9 +113,12 @@ class TestProviderRepository:
         repo = ProviderRepository()
 
         from src import database
+
         original_execute_query = database.execute_query
 
-        async def test_execute_query(query, params=None, fetch_one=False, fetch_all=False):
+        async def test_execute_query(
+            query, params=None, fetch_one=False, fetch_all=False
+        ):
             cursor = db_connection.cursor(dictionary=True)
             cursor.execute(query, params or ())
 
@@ -116,7 +132,10 @@ class TestProviderRepository:
                 return result
             else:
                 db_connection.commit()
-                result = {"affected_rows": cursor.rowcount, "last_insert_id": cursor.lastrowid}
+                result = {
+                    "affected_rows": cursor.rowcount,
+                    "last_insert_id": cursor.lastrowid,
+                }
                 cursor.close()
                 return result
 
@@ -137,9 +156,12 @@ class TestProviderRepository:
         repo = ProviderRepository()
 
         from src import database
+
         original_execute_query = database.execute_query
 
-        async def test_execute_query(query, params=None, fetch_one=False, fetch_all=False):
+        async def test_execute_query(
+            query, params=None, fetch_one=False, fetch_all=False
+        ):
             cursor = db_connection.cursor(dictionary=True)
             cursor.execute(query, params or ())
 
@@ -153,7 +175,10 @@ class TestProviderRepository:
                 return result
             else:
                 db_connection.commit()
-                result = {"affected_rows": cursor.rowcount, "last_insert_id": cursor.lastrowid}
+                result = {
+                    "affected_rows": cursor.rowcount,
+                    "last_insert_id": cursor.lastrowid,
+                }
                 cursor.close()
                 return result
 
@@ -172,9 +197,12 @@ class TestProviderRepository:
         repo = ProviderRepository()
 
         from src import database
+
         original_execute_query = database.execute_query
 
-        async def test_execute_query(query, params=None, fetch_one=False, fetch_all=False):
+        async def test_execute_query(
+            query, params=None, fetch_one=False, fetch_all=False
+        ):
             cursor = db_connection.cursor(dictionary=True)
             cursor.execute(query, params or ())
 
@@ -188,7 +216,10 @@ class TestProviderRepository:
                 return result
             else:
                 db_connection.commit()
-                result = {"affected_rows": cursor.rowcount, "last_insert_id": cursor.lastrowid}
+                result = {
+                    "affected_rows": cursor.rowcount,
+                    "last_insert_id": cursor.lastrowid,
+                }
                 cursor.close()
                 return result
 
@@ -208,9 +239,12 @@ class TestProviderRepository:
         repo = ProviderRepository()
 
         from src import database
+
         original_execute_query = database.execute_query
 
-        async def test_execute_query(query, params=None, fetch_one=False, fetch_all=False):
+        async def test_execute_query(
+            query, params=None, fetch_one=False, fetch_all=False
+        ):
             cursor = db_connection.cursor(dictionary=True)
             cursor.execute(query, params or ())
 
@@ -224,7 +258,10 @@ class TestProviderRepository:
                 return result
             else:
                 db_connection.commit()
-                result = {"affected_rows": cursor.rowcount, "last_insert_id": cursor.lastrowid}
+                result = {
+                    "affected_rows": cursor.rowcount,
+                    "last_insert_id": cursor.lastrowid,
+                }
                 cursor.close()
                 return result
 
@@ -237,14 +274,19 @@ class TestProviderRepository:
             database.execute_query = original_execute_query
 
     @pytest.mark.asyncio
-    async def test_update_provider_duplicate_name(self, db_connection, sample_provider, sample_provider_2):
+    async def test_update_provider_duplicate_name(
+        self, db_connection, sample_provider, sample_provider_2
+    ):
         """Test updating provider with duplicate name raises error."""
         repo = ProviderRepository()
 
         from src import database
+
         original_execute_query = database.execute_query
 
-        async def test_execute_query(query, params=None, fetch_one=False, fetch_all=False):
+        async def test_execute_query(
+            query, params=None, fetch_one=False, fetch_all=False
+        ):
             cursor = db_connection.cursor(dictionary=True)
             cursor.execute(query, params or ())
 
@@ -258,7 +300,10 @@ class TestProviderRepository:
                 return result
             else:
                 db_connection.commit()
-                result = {"affected_rows": cursor.rowcount, "last_insert_id": cursor.lastrowid}
+                result = {
+                    "affected_rows": cursor.rowcount,
+                    "last_insert_id": cursor.lastrowid,
+                }
                 cursor.close()
                 return result
 
@@ -281,9 +326,12 @@ class TestTruckRepository:
         repo = TruckRepository()
 
         from src import database
+
         original_execute_query = database.execute_query
 
-        async def test_execute_query(query, params=None, fetch_one=False, fetch_all=False):
+        async def test_execute_query(
+            query, params=None, fetch_one=False, fetch_all=False
+        ):
             cursor = db_connection.cursor(dictionary=True)
             cursor.execute(query, params or ())
 
@@ -297,7 +345,10 @@ class TestTruckRepository:
                 return result
             else:
                 db_connection.commit()
-                result = {"affected_rows": cursor.rowcount, "last_insert_id": cursor.lastrowid}
+                result = {
+                    "affected_rows": cursor.rowcount,
+                    "last_insert_id": cursor.lastrowid,
+                }
                 cursor.close()
                 return result
 
@@ -317,9 +368,12 @@ class TestTruckRepository:
         repo = TruckRepository()
 
         from src import database
+
         original_execute_query = database.execute_query
 
-        async def test_execute_query(query, params=None, fetch_one=False, fetch_all=False):
+        async def test_execute_query(
+            query, params=None, fetch_one=False, fetch_all=False
+        ):
             cursor = db_connection.cursor(dictionary=True)
             cursor.execute(query, params or ())
 
@@ -333,7 +387,10 @@ class TestTruckRepository:
                 return result
             else:
                 db_connection.commit()
-                result = {"affected_rows": cursor.rowcount, "last_insert_id": cursor.lastrowid}
+                result = {
+                    "affected_rows": cursor.rowcount,
+                    "last_insert_id": cursor.lastrowid,
+                }
                 cursor.close()
                 return result
 
@@ -346,14 +403,19 @@ class TestTruckRepository:
             database.execute_query = original_execute_query
 
     @pytest.mark.asyncio
-    async def test_update_truck_upsert(self, db_connection, sample_provider, sample_truck):
+    async def test_update_truck_upsert(
+        self, db_connection, sample_provider, sample_truck
+    ):
         """Test updating an existing truck (upsert behavior)."""
         repo = TruckRepository()
 
         from src import database
+
         original_execute_query = database.execute_query
 
-        async def test_execute_query(query, params=None, fetch_one=False, fetch_all=False):
+        async def test_execute_query(
+            query, params=None, fetch_one=False, fetch_all=False
+        ):
             cursor = db_connection.cursor(dictionary=True)
             cursor.execute(query, params or ())
 
@@ -367,7 +429,10 @@ class TestTruckRepository:
                 return result
             else:
                 db_connection.commit()
-                result = {"affected_rows": cursor.rowcount, "last_insert_id": cursor.lastrowid}
+                result = {
+                    "affected_rows": cursor.rowcount,
+                    "last_insert_id": cursor.lastrowid,
+                }
                 cursor.close()
                 return result
 
@@ -388,9 +453,12 @@ class TestTruckRepository:
         repo = TruckRepository()
 
         from src import database
+
         original_execute_query = database.execute_query
 
-        async def test_execute_query(query, params=None, fetch_one=False, fetch_all=False):
+        async def test_execute_query(
+            query, params=None, fetch_one=False, fetch_all=False
+        ):
             cursor = db_connection.cursor(dictionary=True)
             cursor.execute(query, params or ())
 
@@ -404,7 +472,10 @@ class TestTruckRepository:
                 return result
             else:
                 db_connection.commit()
-                result = {"affected_rows": cursor.rowcount, "last_insert_id": cursor.lastrowid}
+                result = {
+                    "affected_rows": cursor.rowcount,
+                    "last_insert_id": cursor.lastrowid,
+                }
                 cursor.close()
                 return result
 
@@ -425,9 +496,12 @@ class TestTruckRepository:
         repo = TruckRepository()
 
         from src import database
+
         original_execute_query = database.execute_query
 
-        async def test_execute_query(query, params=None, fetch_one=False, fetch_all=False):
+        async def test_execute_query(
+            query, params=None, fetch_one=False, fetch_all=False
+        ):
             cursor = db_connection.cursor(dictionary=True)
             cursor.execute(query, params or ())
 
@@ -441,7 +515,10 @@ class TestTruckRepository:
                 return result
             else:
                 db_connection.commit()
-                result = {"affected_rows": cursor.rowcount, "last_insert_id": cursor.lastrowid}
+                result = {
+                    "affected_rows": cursor.rowcount,
+                    "last_insert_id": cursor.lastrowid,
+                }
                 cursor.close()
                 return result
 
@@ -455,14 +532,19 @@ class TestTruckRepository:
             database.execute_query = original_execute_query
 
     @pytest.mark.asyncio
-    async def test_update_truck_success(self, db_connection, sample_provider, sample_provider_2, sample_truck):
+    async def test_update_truck_success(
+        self, db_connection, sample_provider, sample_provider_2, sample_truck
+    ):
         """Test updating a truck's provider."""
         repo = TruckRepository()
 
         from src import database
+
         original_execute_query = database.execute_query
 
-        async def test_execute_query(query, params=None, fetch_one=False, fetch_all=False):
+        async def test_execute_query(
+            query, params=None, fetch_one=False, fetch_all=False
+        ):
             cursor = db_connection.cursor(dictionary=True)
             cursor.execute(query, params or ())
 
@@ -476,7 +558,10 @@ class TestTruckRepository:
                 return result
             else:
                 db_connection.commit()
-                result = {"affected_rows": cursor.rowcount, "last_insert_id": cursor.lastrowid}
+                result = {
+                    "affected_rows": cursor.rowcount,
+                    "last_insert_id": cursor.lastrowid,
+                }
                 cursor.close()
                 return result
 
@@ -496,9 +581,12 @@ class TestTruckRepository:
         repo = TruckRepository()
 
         from src import database
+
         original_execute_query = database.execute_query
 
-        async def test_execute_query(query, params=None, fetch_one=False, fetch_all=False):
+        async def test_execute_query(
+            query, params=None, fetch_one=False, fetch_all=False
+        ):
             cursor = db_connection.cursor(dictionary=True)
             cursor.execute(query, params or ())
 
@@ -512,7 +600,10 @@ class TestTruckRepository:
                 return result
             else:
                 db_connection.commit()
-                result = {"affected_rows": cursor.rowcount, "last_insert_id": cursor.lastrowid}
+                result = {
+                    "affected_rows": cursor.rowcount,
+                    "last_insert_id": cursor.lastrowid,
+                }
                 cursor.close()
                 return result
 
@@ -530,9 +621,12 @@ class TestTruckRepository:
         repo = TruckRepository()
 
         from src import database
+
         original_execute_query = database.execute_query
 
-        async def test_execute_query(query, params=None, fetch_one=False, fetch_all=False):
+        async def test_execute_query(
+            query, params=None, fetch_one=False, fetch_all=False
+        ):
             cursor = db_connection.cursor(dictionary=True)
             cursor.execute(query, params or ())
 
@@ -546,7 +640,10 @@ class TestTruckRepository:
                 return result
             else:
                 db_connection.commit()
-                result = {"affected_rows": cursor.rowcount, "last_insert_id": cursor.lastrowid}
+                result = {
+                    "affected_rows": cursor.rowcount,
+                    "last_insert_id": cursor.lastrowid,
+                }
                 cursor.close()
                 return result
 
@@ -564,9 +661,12 @@ class TestTruckRepository:
         repo = TruckRepository()
 
         from src import database
+
         original_execute_query = database.execute_query
 
-        async def test_execute_query(query, params=None, fetch_one=False, fetch_all=False):
+        async def test_execute_query(
+            query, params=None, fetch_one=False, fetch_all=False
+        ):
             cursor = db_connection.cursor(dictionary=True)
             cursor.execute(query, params or ())
 
@@ -580,7 +680,10 @@ class TestTruckRepository:
                 return result
             else:
                 db_connection.commit()
-                result = {"affected_rows": cursor.rowcount, "last_insert_id": cursor.lastrowid}
+                result = {
+                    "affected_rows": cursor.rowcount,
+                    "last_insert_id": cursor.lastrowid,
+                }
                 cursor.close()
                 return result
 
@@ -594,14 +697,19 @@ class TestTruckRepository:
             database.execute_query = original_execute_query
 
     @pytest.mark.asyncio
-    async def test_get_trucks_by_provider_multiple(self, db_connection, sample_provider, sample_truck, sample_truck_2):
+    async def test_get_trucks_by_provider_multiple(
+        self, db_connection, sample_provider, sample_truck, sample_truck_2
+    ):
         """Test getting multiple trucks for a provider."""
         repo = TruckRepository()
 
         from src import database
+
         original_execute_query = database.execute_query
 
-        async def test_execute_query(query, params=None, fetch_one=False, fetch_all=False):
+        async def test_execute_query(
+            query, params=None, fetch_one=False, fetch_all=False
+        ):
             cursor = db_connection.cursor(dictionary=True)
             cursor.execute(query, params or ())
 
@@ -615,7 +723,10 @@ class TestTruckRepository:
                 return result
             else:
                 db_connection.commit()
-                result = {"affected_rows": cursor.rowcount, "last_insert_id": cursor.lastrowid}
+                result = {
+                    "affected_rows": cursor.rowcount,
+                    "last_insert_id": cursor.lastrowid,
+                }
                 cursor.close()
                 return result
 
@@ -641,9 +752,12 @@ class TestRateRepository:
         repo = RateRepository()
 
         from src import database
+
         original_execute_query = database.execute_query
 
-        async def test_execute_query(query, params=None, fetch_one=False, fetch_all=False):
+        async def test_execute_query(
+            query, params=None, fetch_one=False, fetch_all=False
+        ):
             cursor = db_connection.cursor(dictionary=True)
             cursor.execute(query, params or ())
 
@@ -657,7 +771,10 @@ class TestRateRepository:
                 return result
             else:
                 db_connection.commit()
-                result = {"affected_rows": cursor.rowcount, "last_insert_id": cursor.lastrowid}
+                result = {
+                    "affected_rows": cursor.rowcount,
+                    "last_insert_id": cursor.lastrowid,
+                }
                 cursor.close()
                 return result
 
@@ -678,9 +795,12 @@ class TestRateRepository:
         repo = RateRepository()
 
         from src import database
+
         original_execute_query = database.execute_query
 
-        async def test_execute_query(query, params=None, fetch_one=False, fetch_all=False):
+        async def test_execute_query(
+            query, params=None, fetch_one=False, fetch_all=False
+        ):
             cursor = db_connection.cursor(dictionary=True)
             cursor.execute(query, params or ())
 
@@ -694,7 +814,10 @@ class TestRateRepository:
                 return result
             else:
                 db_connection.commit()
-                result = {"affected_rows": cursor.rowcount, "last_insert_id": cursor.lastrowid}
+                result = {
+                    "affected_rows": cursor.rowcount,
+                    "last_insert_id": cursor.lastrowid,
+                }
                 cursor.close()
                 return result
 
@@ -723,9 +846,12 @@ class TestRateRepository:
         repo = RateRepository()
 
         from src import database
+
         original_execute_query = database.execute_query
 
-        async def test_execute_query(query, params=None, fetch_one=False, fetch_all=False):
+        async def test_execute_query(
+            query, params=None, fetch_one=False, fetch_all=False
+        ):
             cursor = db_connection.cursor(dictionary=True)
             cursor.execute(query, params or ())
 
@@ -739,7 +865,10 @@ class TestRateRepository:
                 return result
             else:
                 db_connection.commit()
-                result = {"affected_rows": cursor.rowcount, "last_insert_id": cursor.lastrowid}
+                result = {
+                    "affected_rows": cursor.rowcount,
+                    "last_insert_id": cursor.lastrowid,
+                }
                 cursor.close()
                 return result
 
@@ -759,9 +888,12 @@ class TestRateRepository:
         repo = RateRepository()
 
         from src import database
+
         original_execute_query = database.execute_query
 
-        async def test_execute_query(query, params=None, fetch_one=False, fetch_all=False):
+        async def test_execute_query(
+            query, params=None, fetch_one=False, fetch_all=False
+        ):
             cursor = db_connection.cursor(dictionary=True)
             cursor.execute(query, params or ())
 
@@ -775,7 +907,10 @@ class TestRateRepository:
                 return result
             else:
                 db_connection.commit()
-                result = {"affected_rows": cursor.rowcount, "last_insert_id": cursor.lastrowid}
+                result = {
+                    "affected_rows": cursor.rowcount,
+                    "last_insert_id": cursor.lastrowid,
+                }
                 cursor.close()
                 return result
 
@@ -795,9 +930,12 @@ class TestRateRepository:
         repo = RateRepository()
 
         from src import database
+
         original_execute_query = database.execute_query
 
-        async def test_execute_query(query, params=None, fetch_one=False, fetch_all=False):
+        async def test_execute_query(
+            query, params=None, fetch_one=False, fetch_all=False
+        ):
             cursor = db_connection.cursor(dictionary=True)
             cursor.execute(query, params or ())
 
@@ -811,7 +949,10 @@ class TestRateRepository:
                 return result
             else:
                 db_connection.commit()
-                result = {"affected_rows": cursor.rowcount, "last_insert_id": cursor.lastrowid}
+                result = {
+                    "affected_rows": cursor.rowcount,
+                    "last_insert_id": cursor.lastrowid,
+                }
                 cursor.close()
                 return result
 
@@ -838,9 +979,12 @@ class TestRateRepository:
         repo = RateRepository()
 
         from src import database
+
         original_execute_query = database.execute_query
 
-        async def test_execute_query(query, params=None, fetch_one=False, fetch_all=False):
+        async def test_execute_query(
+            query, params=None, fetch_one=False, fetch_all=False
+        ):
             cursor = db_connection.cursor(dictionary=True)
             cursor.execute(query, params or ())
 
@@ -854,7 +998,10 @@ class TestRateRepository:
                 return result
             else:
                 db_connection.commit()
-                result = {"affected_rows": cursor.rowcount, "last_insert_id": cursor.lastrowid}
+                result = {
+                    "affected_rows": cursor.rowcount,
+                    "last_insert_id": cursor.lastrowid,
+                }
                 cursor.close()
                 return result
 
@@ -868,7 +1015,9 @@ class TestRateRepository:
             provider_scope_rates = [r for r in all_rates if r.scope != "ALL"]
 
             assert len(all_scope_rates) == 2  # apples and oranges with ALL scope
-            assert len(provider_scope_rates) == 2  # apples and oranges with provider scope
+            assert (
+                len(provider_scope_rates) == 2
+            )  # apples and oranges with provider scope
         finally:
             database.execute_query = original_execute_query
 
@@ -878,9 +1027,12 @@ class TestRateRepository:
         repo = RateRepository()
 
         from src import database
+
         original_execute_query = database.execute_query
 
-        async def test_execute_query(query, params=None, fetch_one=False, fetch_all=False):
+        async def test_execute_query(
+            query, params=None, fetch_one=False, fetch_all=False
+        ):
             cursor = db_connection.cursor(dictionary=True)
             cursor.execute(query, params or ())
 
@@ -894,7 +1046,10 @@ class TestRateRepository:
                 return result
             else:
                 db_connection.commit()
-                result = {"affected_rows": cursor.rowcount, "last_insert_id": cursor.lastrowid}
+                result = {
+                    "affected_rows": cursor.rowcount,
+                    "last_insert_id": cursor.lastrowid,
+                }
                 cursor.close()
                 return result
 
@@ -933,9 +1088,12 @@ class TestRepositoryIntegration:
         truck_repo = TruckRepository()
 
         from src import database
+
         original_execute_query = database.execute_query
 
-        async def test_execute_query(query, params=None, fetch_one=False, fetch_all=False):
+        async def test_execute_query(
+            query, params=None, fetch_one=False, fetch_all=False
+        ):
             cursor = db_connection.cursor(dictionary=True)
             cursor.execute(query, params or ())
 
@@ -949,7 +1107,10 @@ class TestRepositoryIntegration:
                 return result
             else:
                 db_connection.commit()
-                result = {"affected_rows": cursor.rowcount, "last_insert_id": cursor.lastrowid}
+                result = {
+                    "affected_rows": cursor.rowcount,
+                    "last_insert_id": cursor.lastrowid,
+                }
                 cursor.close()
                 return result
 
@@ -960,8 +1121,8 @@ class TestRepositoryIntegration:
             provider = await provider_repo.create(name="Transport Co")
 
             # Create trucks for provider
-            truck1 = await truck_repo.create_or_update("TRUCK001", provider.id)
-            truck2 = await truck_repo.create_or_update("TRUCK002", provider.id)
+            await truck_repo.create_or_update("TRUCK001", provider.id)
+            await truck_repo.create_or_update("TRUCK002", provider.id)
 
             # Verify relationship
             trucks = await truck_repo.get_by_provider(provider.id)
@@ -977,9 +1138,12 @@ class TestRepositoryIntegration:
         truck_repo = TruckRepository()
 
         from src import database
+
         original_execute_query = database.execute_query
 
-        async def test_execute_query(query, params=None, fetch_one=False, fetch_all=False):
+        async def test_execute_query(
+            query, params=None, fetch_one=False, fetch_all=False
+        ):
             cursor = db_connection.cursor(dictionary=True)
             cursor.execute(query, params or ())
 
@@ -993,7 +1157,10 @@ class TestRepositoryIntegration:
                 return result
             else:
                 db_connection.commit()
-                result = {"affected_rows": cursor.rowcount, "last_insert_id": cursor.lastrowid}
+                result = {
+                    "affected_rows": cursor.rowcount,
+                    "last_insert_id": cursor.lastrowid,
+                }
                 cursor.close()
                 return result
 
@@ -1025,9 +1192,12 @@ class TestRepositoryIntegration:
         truck_repo = TruckRepository()
 
         from src import database
+
         original_execute_query = database.execute_query
 
-        async def test_execute_query(query, params=None, fetch_one=False, fetch_all=False):
+        async def test_execute_query(
+            query, params=None, fetch_one=False, fetch_all=False
+        ):
             cursor = db_connection.cursor(dictionary=True)
             cursor.execute(query, params or ())
 
@@ -1041,7 +1211,10 @@ class TestRepositoryIntegration:
                 return result
             else:
                 db_connection.commit()
-                result = {"affected_rows": cursor.rowcount, "last_insert_id": cursor.lastrowid}
+                result = {
+                    "affected_rows": cursor.rowcount,
+                    "last_insert_id": cursor.lastrowid,
+                }
                 cursor.close()
                 return result
 

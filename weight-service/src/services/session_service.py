@@ -8,8 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..models.database import Transaction
 from ..models.repositories import SessionRepository, TransactionRepository
-from ..models.schemas import SessionPair, SessionResponse, TransactionResponse
-from ..utils.calculations import parse_container_list
+from ..models.schemas import SessionPair, SessionResponse
 
 
 class SessionNotFoundError(Exception):

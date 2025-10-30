@@ -1,9 +1,10 @@
 import asyncio
 import logging
-from typing import Optional, Dict, Any, List
-import mysql.connector
-from mysql.connector import pooling
 from contextlib import asynccontextmanager
+from typing import Any, Dict, List, Optional
+
+from mysql.connector import pooling
+
 from .config import settings
 
 logger = logging.getLogger(__name__)
@@ -15,25 +16,25 @@ _connection_pool: Optional[pooling.MySQLConnectionPool] = None
 def initialize_pool() -> None:
     """Initialize the MySQL connection pool."""
     global _connection_pool
-    
+
     try:
         pool_config = {
-            'host': settings.db_host,
-            'port': settings.db_port,
-            'database': settings.db_name,
-            'user': settings.db_user,
-            'password': settings.db_password,
-            'pool_name': 'billing_pool',
-            'pool_size': 10,
-            'pool_reset_session': True,
-            'charset': 'utf8mb4',
-            'collation': 'utf8mb4_unicode_ci',
-            'autocommit': True,
+            "host": settings.db_host,
+            "port": settings.db_port,
+            "database": settings.db_name,
+            "user": settings.db_user,
+            "password": settings.db_password,
+            "pool_name": "billing_pool",
+            "pool_size": 10,
+            "pool_reset_session": True,
+            "charset": "utf8mb4",
+            "collation": "utf8mb4_unicode_ci",
+            "autocommit": True,
         }
-        
+
         _connection_pool = pooling.MySQLConnectionPool(**pool_config)
         logger.info("Database connection pool initialized successfully")
-        
+
     except Exception as e:
         logger.error(f"Failed to initialize database pool: {e}")
         _connection_pool = None
@@ -44,7 +45,7 @@ def get_connection():
     """Get a connection from the pool."""
     if _connection_pool is None:
         raise RuntimeError("Database pool not initialized")
-    
+
     try:
         return _connection_pool.get_connection()
     except Exception as e:
@@ -74,10 +75,10 @@ async def get_db_connection():
 
 
 async def execute_query(
-    query: str, 
+    query: str,
     params: Optional[tuple] = None,
     fetch_one: bool = False,
-    fetch_all: bool = False
+    fetch_all: bool = False,
 ) -> Optional[Dict[str, Any] | List[Dict[str, Any]]]:
     """Execute a database query asynchronously."""
     async with get_db_connection() as connection:
@@ -86,7 +87,7 @@ async def execute_query(
             await asyncio.get_event_loop().run_in_executor(
                 None, cursor.execute, query, params or ()
             )
-            
+
             if fetch_one:
                 result = await asyncio.get_event_loop().run_in_executor(
                     None, cursor.fetchone
@@ -100,8 +101,11 @@ async def execute_query(
             else:
                 # For INSERT/UPDATE/DELETE operations
                 connection.commit()
-                return {"affected_rows": cursor.rowcount, "last_insert_id": cursor.lastrowid}
-                
+                return {
+                    "affected_rows": cursor.rowcount,
+                    "last_insert_id": cursor.lastrowid,
+                }
+
         finally:
             cursor.close()
 

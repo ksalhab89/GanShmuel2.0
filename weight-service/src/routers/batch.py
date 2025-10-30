@@ -3,7 +3,6 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
 
 from ..dependencies import DatabaseSession, get_file_service
 from ..models.schemas import BatchWeightRequest, BatchUploadResponse

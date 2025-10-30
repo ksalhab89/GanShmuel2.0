@@ -3,7 +3,6 @@
 from typing import Annotated, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel
 
 from ..dependencies import DatabaseSession, get_query_service, get_session_service, get_container_service
 from ..models.schemas import (

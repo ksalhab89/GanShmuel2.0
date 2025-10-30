@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional, List, Union
+from typing import List, Optional, Union
 
 
 @dataclass
@@ -24,6 +24,7 @@ class Truck:
 @dataclass
 class WeightTransaction:
     """Weight service transaction model."""
+
     id: str
     direction: str
     bruto: Optional[int]
@@ -37,6 +38,7 @@ class WeightTransaction:
 @dataclass
 class WeightItem:
     """Weight service item details model."""
+
     id: str
     tara: Union[int, str]  # Can be "na"
     sessions: List[str]

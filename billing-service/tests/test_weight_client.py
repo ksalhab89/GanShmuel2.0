@@ -1,10 +1,13 @@
 """Tests for weight service HTTP client - integration and retry logic."""
-import pytest
+
 from unittest.mock import AsyncMock, MagicMock, patch
+
 import httpx
+import pytest
+
+from src.models.database import WeightItem
 from src.services.weight_client import WeightServiceClient
 from src.utils.exceptions import WeightServiceError
-from src.models.database import WeightItem
 
 
 class TestWeightServiceClientGetTransactions:
@@ -18,18 +21,13 @@ class TestWeightServiceClientGetTransactions:
             {"id": "tr1", "truck": "ABC123", "neto": 1000, "produce": "apples"},
             {"id": "tr2", "truck": "XYZ789", "neto": 2000, "produce": "oranges"},
         ]
-        mock_httpx_client.set_response(
-            "/weight",
-            expected_transactions,
-            200
-        )
+        mock_httpx_client.set_response("/weight", expected_transactions, 200)
 
         client = WeightServiceClient()
 
         with patch("httpx.AsyncClient", return_value=mock_httpx_client):
             transactions = await client.get_transactions(
-                from_date="20250101000000",
-                to_date="20251231235959"
+                from_date="20250101000000", to_date="20251231235959"
             )
 
         assert transactions == expected_transactions
@@ -41,11 +39,7 @@ class TestWeightServiceClientGetTransactions:
         expected_transactions = [
             {"id": "tr1", "direction": "out", "neto": 1000},
         ]
-        mock_httpx_client.set_response(
-            "/weight",
-            expected_transactions,
-            200
-        )
+        mock_httpx_client.set_response("/weight", expected_transactions, 200)
 
         client = WeightServiceClient()
 
@@ -53,7 +47,7 @@ class TestWeightServiceClientGetTransactions:
             transactions = await client.get_transactions(
                 from_date="20250101000000",
                 to_date="20251231235959",
-                filter_directions="out"
+                filter_directions="out",
             )
 
         assert len(transactions) == 1
@@ -68,8 +62,7 @@ class TestWeightServiceClientGetTransactions:
 
         with patch("httpx.AsyncClient", return_value=mock_httpx_client):
             transactions = await client.get_transactions(
-                from_date="20250101000000",
-                to_date="20251231235959"
+                from_date="20250101000000", to_date="20251231235959"
             )
 
         assert transactions == []
@@ -83,8 +76,7 @@ class TestWeightServiceClientGetTransactions:
 
         with patch("httpx.AsyncClient", return_value=mock_httpx_client):
             transactions = await client.get_transactions(
-                from_date="20250101000000",
-                to_date="20251231235959"
+                from_date="20250101000000", to_date="20251231235959"
             )
 
         assert transactions == []
@@ -111,8 +103,7 @@ class TestWeightServiceClientGetTransactions:
 
         with patch("httpx.AsyncClient", MockAsyncClient):
             transactions = await client.get_transactions(
-                from_date="20250101000000",
-                to_date="20251231235959"
+                from_date="20250101000000", to_date="20251231235959"
             )
 
         # Should return empty list for non-list responses
@@ -140,7 +131,7 @@ class TestWeightServiceClientGetItemDetails:
                 mock_response.json.return_value = {
                     "id": "ABC123",
                     "tara": 10000,
-                    "sessions": ["sess1", "sess2"]
+                    "sessions": ["sess1", "sess2"],
                 }
                 return mock_response
 
@@ -148,9 +139,7 @@ class TestWeightServiceClientGetItemDetails:
 
         with patch("httpx.AsyncClient", MockAsyncClient):
             item = await client.get_item_details(
-                item_id="ABC123",
-                from_date="20250101000000",
-                to_date="20251231235959"
+                item_id="ABC123", from_date="20250101000000", to_date="20251231235959"
             )
 
         assert item is not None
@@ -177,7 +166,7 @@ class TestWeightServiceClientGetItemDetails:
                 mock_response.json.return_value = {
                     "id": "CONTAINER001",
                     "tara": "na",
-                    "sessions": []
+                    "sessions": [],
                 }
                 return mock_response
 
@@ -187,7 +176,7 @@ class TestWeightServiceClientGetItemDetails:
             item = await client.get_item_details(
                 item_id="CONTAINER001",
                 from_date="20250101000000",
-                to_date="20251231235959"
+                to_date="20251231235959",
             )
 
         assert item is not None
@@ -216,7 +205,7 @@ class TestWeightServiceClientGetItemDetails:
             item = await client.get_item_details(
                 item_id="NONEXISTENT",
                 from_date="20250101000000",
-                to_date="20251231235959"
+                to_date="20251231235959",
             )
 
         assert item is None
@@ -239,7 +228,7 @@ class TestWeightServiceClientGetItemDetails:
                 mock_response.json.return_value = {
                     "id": "NEWTRUCK",
                     "tara": 12000,
-                    "sessions": []
+                    "sessions": [],
                 }
                 return mock_response
 
@@ -247,9 +236,7 @@ class TestWeightServiceClientGetItemDetails:
 
         with patch("httpx.AsyncClient", MockAsyncClient):
             item = await client.get_item_details(
-                item_id="NEWTRUCK",
-                from_date="20250101000000",
-                to_date="20251231235959"
+                item_id="NEWTRUCK", from_date="20250101000000", to_date="20251231235959"
             )
 
         assert item is not None
@@ -292,8 +279,7 @@ class TestWeightServiceClientRetryLogic:
         with patch("httpx.AsyncClient", MockAsyncClient):
             with patch("asyncio.sleep", AsyncMock()):  # Skip actual sleep
                 transactions = await client.get_transactions(
-                    from_date="20250101000000",
-                    to_date="20251231235959"
+                    from_date="20250101000000", to_date="20251231235959"
                 )
 
         assert attempt_count == 2  # Failed once, succeeded second time
@@ -318,10 +304,12 @@ class TestWeightServiceClientRetryLogic:
 
         with patch("httpx.AsyncClient", MockAsyncClient):
             with patch("asyncio.sleep", AsyncMock()):
-                with pytest.raises(WeightServiceError, match="Weight service unavailable after 3 attempts"):
+                with pytest.raises(
+                    WeightServiceError,
+                    match="Weight service unavailable after 3 attempts",
+                ):
                     await client.get_transactions(
-                        from_date="20250101000000",
-                        to_date="20251231235959"
+                        from_date="20250101000000", to_date="20251231235959"
                     )
 
     @pytest.mark.asyncio
@@ -355,8 +343,7 @@ class TestWeightServiceClientRetryLogic:
         with patch("httpx.AsyncClient", MockAsyncClient):
             with patch("asyncio.sleep", AsyncMock()):
                 transactions = await client.get_transactions(
-                    from_date="20250101000000",
-                    to_date="20251231235959"
+                    from_date="20250101000000", to_date="20251231235959"
                 )
 
         assert attempt_count == 2
@@ -388,8 +375,7 @@ class TestWeightServiceClientRetryLogic:
 
         with patch("httpx.AsyncClient", MockAsyncClient):
             transactions = await client.get_transactions(
-                from_date="20250101000000",
-                to_date="20251231235959"
+                from_date="20250101000000", to_date="20251231235959"
             )
 
         assert attempt_count == 1  # Only one attempt
@@ -426,8 +412,7 @@ class TestWeightServiceClientRetryLogic:
         with patch("httpx.AsyncClient", MockAsyncClient):
             with patch("asyncio.sleep", AsyncMock()):
                 transactions = await client.get_transactions(
-                    from_date="20250101000000",
-                    to_date="20251231235959"
+                    from_date="20250101000000", to_date="20251231235959"
                 )
 
         assert attempt_count == 2
@@ -480,11 +465,13 @@ class TestWeightServiceClientEdgeCases:
         client = WeightServiceClient()
 
         with patch("httpx.AsyncClient", MockAsyncClient):
-            with pytest.raises(WeightServiceError, match="Error processing weight service response"):
+            with pytest.raises(
+                WeightServiceError, match="Error processing weight service response"
+            ):
                 await client.get_item_details(
                     item_id="ABC123",
                     from_date="20250101000000",
-                    to_date="20251231235959"
+                    to_date="20251231235959",
                 )
 
     @pytest.mark.asyncio
@@ -508,10 +495,11 @@ class TestWeightServiceClientEdgeCases:
         client = WeightServiceClient()
 
         with patch("httpx.AsyncClient", MockAsyncClient):
-            with pytest.raises(WeightServiceError, match="Error processing weight service response"):
+            with pytest.raises(
+                WeightServiceError, match="Error processing weight service response"
+            ):
                 await client.get_transactions(
-                    from_date="20250101000000",
-                    to_date="20251231235959"
+                    from_date="20250101000000", to_date="20251231235959"
                 )
 
     @pytest.mark.asyncio
@@ -530,19 +518,14 @@ class TestWeightServiceClientEdgeCases:
                 mock_response = MagicMock()
                 mock_response.status_code = 200
                 # Missing 'sessions' field
-                mock_response.json.return_value = {
-                    "id": "ABC123",
-                    "tara": 10000
-                }
+                mock_response.json.return_value = {"id": "ABC123", "tara": 10000}
                 return mock_response
 
         client = WeightServiceClient()
 
         with patch("httpx.AsyncClient", MockAsyncClient):
             item = await client.get_item_details(
-                item_id="ABC123",
-                from_date="20250101000000",
-                to_date="20251231235959"
+                item_id="ABC123", from_date="20250101000000", to_date="20251231235959"
             )
 
         # Should handle missing fields gracefully with defaults
@@ -577,7 +560,7 @@ class TestWeightServiceClientEdgeCases:
             await client.get_transactions(
                 from_date="20250101120000",
                 to_date="20250131235959",
-                filter_directions="out,in"
+                filter_directions="out,in",
             )
 
         assert captured_params.get("from") == "20250101120000"
