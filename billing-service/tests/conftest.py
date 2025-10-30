@@ -56,9 +56,13 @@ async def create_schema():
     )
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture(scope="session")
 def setup_database():
-    """Initialize database pool and create schema for all tests."""
+    """Initialize database pool and create schema for tests that need it.
+
+    This fixture is NOT autouse - tests must explicitly depend on it
+    or use clean_database which depends on it.
+    """
     import asyncio
 
     initialize_pool()
@@ -94,7 +98,7 @@ async def test_client() -> AsyncGenerator[AsyncClient, None]:
 
 
 @pytest_asyncio.fixture
-async def clean_database():
+async def clean_database(setup_database):
     """Clean database before and after tests."""
     # Clean before test
     await execute_query("DELETE FROM Trucks")
