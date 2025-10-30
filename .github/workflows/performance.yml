@@ -6,6 +6,10 @@ on:
     - cron: '0 2 * * 0'
   workflow_dispatch:  # Allow manual triggering
 
+permissions:
+  contents: read
+  actions: write  # For uploading artifacts
+
 jobs:
   performance-tests:
     runs-on: ubuntu-latest

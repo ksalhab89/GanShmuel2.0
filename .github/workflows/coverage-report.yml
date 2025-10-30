@@ -6,6 +6,11 @@ on:
   pull_request:
     branches: [ main, develop ]
 
+permissions:
+  contents: read
+  actions: write  # For uploading artifacts
+  pull-requests: write  # For PR comments
+
 jobs:
   coverage:
     runs-on: ubuntu-latest

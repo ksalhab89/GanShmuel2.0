@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [ main, develop ]
 
+permissions:
+  contents: read
+  pull-requests: write  # For Codecov PR comments
+
 jobs:
   weight-service:
     runs-on: ubuntu-latest
