@@ -1,6 +1,5 @@
 """Tests for datetime utility functions."""
 
-
 import pytest
 from freezegun import freeze_time
 

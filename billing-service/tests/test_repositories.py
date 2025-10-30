@@ -4,7 +4,6 @@ Tests all repository CRUD operations, edge cases, and database interactions.
 Ensures 95%+ coverage of repository layer.
 """
 
-
 import pytest
 
 from src.models.database import Rate

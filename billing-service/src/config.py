@@ -29,10 +29,14 @@ _db_defaults = _parse_db_url()
 
 class Settings(BaseSettings):
     # Database configuration
-    db_host: str = Field(default=_db_defaults.get("db_host", "localhost"), alias="DB_HOST")
+    db_host: str = Field(
+        default=_db_defaults.get("db_host", "localhost"), alias="DB_HOST"
+    )
     db_port: int = Field(default=_db_defaults.get("db_port", 3307), alias="DB_PORT")
     db_user: str = Field(default=_db_defaults.get("db_user", "bill"), alias="DB_USER")
-    db_password: str = Field(default=_db_defaults.get("db_password", "billing_pass"), alias="DB_PASSWORD")
+    db_password: str = Field(
+        default=_db_defaults.get("db_password", "billing_pass"), alias="DB_PASSWORD"
+    )
     db_name: str = Field(default=_db_defaults.get("db_name", "billdb"), alias="DB_NAME")
 
     # Weight service configuration

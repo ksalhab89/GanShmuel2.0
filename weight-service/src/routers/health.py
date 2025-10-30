@@ -2,12 +2,10 @@
 
 from datetime import datetime
 from importlib.metadata import version
-from typing import Annotated
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter
 from sqlalchemy import text
 
 from ..dependencies import DatabaseSession
-from ..models.schemas import HealthResponse
 
 router = APIRouter(tags=["Health"])
 

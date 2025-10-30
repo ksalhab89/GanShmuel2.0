@@ -3,7 +3,6 @@
 Tests database model relationships, constraints, and data integrity.
 """
 
-
 import pytest
 
 from src.models.database import Provider, Rate, Truck, WeightItem, WeightTransaction
