@@ -1,0 +1,125 @@
+# Pre-commit hooks for Gan Shmuel project
+# Install: pip install pre-commit && pre-commit install
+# Run manually: pre-commit run --all-files
+
+repos:
+  # Standard pre-commit hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: check-yaml
+        name: Check YAML syntax
+      - id: end-of-file-fixer
+        name: Fix end of files
+      - id: trailing-whitespace
+        name: Trim trailing whitespace
+      - id: check-merge-conflict
+        name: Check for merge conflicts
+      - id: check-added-large-files
+        name: Check for large files (>500KB)
+        args: ['--maxkb=500']
+      - id: check-json
+        name: Check JSON syntax
+      - id: detect-private-key
+        name: Detect private keys
+
+  # Python: Ruff linter and formatter (replaces black, isort, flake8)
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.1.9
+    hooks:
+      - id: ruff
+        name: Ruff linter
+        args: [--fix, --exit-non-zero-on-fix]
+        files: \.(py)$
+      - id: ruff-format
+        name: Ruff formatter
+        files: \.(py)$
+
+  # Python: Type checking with mypy
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.7.1
+    hooks:
+      - id: mypy
+        name: mypy type checker
+        files: ^(weight-service|billing-service|shift-service|provider-registration-service)/src/
+        args: [--config-file=pyproject.toml, --ignore-missing-imports]
+        additional_dependencies:
+          - types-requests
+          - sqlalchemy[mypy]
+          - pydantic
+
+  # JavaScript/TypeScript: ESLint and Prettier
+  - repo: https://github.com/pre-commit/mirrors-eslint
+    rev: v8.56.0
+    hooks:
+      - id: eslint
+        name: ESLint
+        files: ^frontend/src/.*\.[jt]sx?$
+        types: [file]
+        args: [--fix, --max-warnings=0]
+        additional_dependencies:
+          - eslint@^8.0.0
+          - '@typescript-eslint/eslint-plugin'
+          - '@typescript-eslint/parser'
+
+  # Docker: Hadolint for Dockerfile linting
+  - repo: https://github.com/hadolint/hadolint
+    rev: v2.12.0
+    hooks:
+      - id: hadolint-docker
+        name: Hadolint (Dockerfile linter)
+        files: Dockerfile
+
+  # Security: detect-secrets to prevent committing secrets
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.4.0
+    hooks:
+      - id: detect-secrets
+        name: Detect secrets
+        args: ['--baseline', '.secrets.baseline']
+        exclude: package-lock.json
+
+  # Local hooks for running tests
+  - repo: local
+    hooks:
+      # Run pytest for Python services (quick mode - no coverage)
+      - id: pytest-quick
+        name: pytest (quick - no coverage)
+        entry: bash -c 'for dir in weight-service billing-service shift-service provider-registration-service; do if [ -d "$dir" ]; then echo "Testing $dir..."; cd "$dir" && uv run pytest tests/ -q --tb=no -x || exit 1; cd ..; fi; done'
+        language: system
+        pass_filenames: false
+        stages: [push]  # Only on push, not commit
+        verbose: true
+
+      # Check for TODOs with ticket numbers
+      - id: check-todos
+        name: Check TODOs have ticket references
+        entry: bash -c 'git diff --cached --name-only --diff-filter=ACM | xargs grep -n "TODO:" | grep -v "TODO: GS-" && echo "ERROR: Found TODOs without ticket references (format: TODO: GS-123)" && exit 1 || exit 0'
+        language: system
+        pass_filenames: false
+        stages: [commit]
+
+# Configuration
+default_stages: [commit, push]
+fail_fast: false  # Run all hooks even if one fails
+minimum_pre_commit_version: '2.20.0'
+
+# Files to exclude from all hooks
+exclude: |
+  (?x)^(
+      \.venv/|
+      \.git/|
+      node_modules/|
+      __pycache__/|
+      \.mypy_cache/|
+      \.pytest_cache/|
+      \.ruff_cache/|
+      dist/|
+      build/|
+      .*\.egg-info/|
+      htmlcov/|
+      \.coverage|
+      coverage\.xml|
+      uv\.lock|
+      package-lock\.json
+  )
