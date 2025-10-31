@@ -1,6 +1,6 @@
 """Tests for rates API error handling and exception paths."""
 
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 from httpx import AsyncClient
@@ -12,13 +12,25 @@ class TestRatesAPIErrorHandling:
     """Test error handling in rates endpoints."""
 
     @pytest.mark.asyncio
-    async def test_upload_rates_generic_exception(self, test_client: AsyncClient, mock_upload_file):
+    async def test_upload_rates_generic_exception(
+        self, test_client: AsyncClient, mock_upload_file
+    ):
         """Test that generic exceptions in upload_rates return 500."""
         # Mock the read_rates_from_file to raise a generic exception
-        with patch("src.routers.rates.read_rates_from_file", side_effect=Exception("Database error")):
+        with patch(
+            "src.routers.rates.read_rates_from_file",
+            side_effect=Exception("Database error"),
+        ):
             response = await test_client.post(
                 "/rates",
-                files={"file": ("rates.xlsx", b"fake content", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")}
+                files={
+                    "file": (
+                        "rates.xlsx",
+                        b"fake content",
+                        "application/vnd.openxmlformats-"
+                        "officedocument.spreadsheetml.sheet",
+                    )
+                },
             )
 
         assert response.status_code == 500
