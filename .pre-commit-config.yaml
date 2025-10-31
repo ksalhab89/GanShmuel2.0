@@ -36,6 +36,7 @@ repos:
         files: ^(weight-service|shift-service|provider-registration-service)/.*\.py$
 
   # Python: Flake8 (for billing-service which uses flake8, not ruff)
+  # TODO: TECH DEBT - Remove flake8, black, isort when migrating billing-service to Ruff
   - repo: https://github.com/pycqa/flake8
     rev: 7.0.0
     hooks:
@@ -46,6 +47,26 @@ repos:
         additional_dependencies:
           - flake8-docstrings
           - flake8-bugbear
+
+  # Python: Black formatter (for billing-service)
+  # TODO: TECH DEBT - Remove when migrating billing-service to Ruff
+  - repo: https://github.com/psf/black
+    rev: 23.12.1
+    hooks:
+      - id: black
+        name: Black formatter (billing-service)
+        args: [--line-length=88]
+        files: ^billing-service/.*\.py$
+
+  # Python: isort import sorting (for billing-service)
+  # TODO: TECH DEBT - Remove when migrating billing-service to Ruff
+  - repo: https://github.com/pycqa/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
+        name: isort (billing-service)
+        args: [--profile=black, --line-length=88]
+        files: ^billing-service/.*\.py$
 
   # Python: Type checking with mypy
   - repo: https://github.com/pre-commit/mirrors-mypy
