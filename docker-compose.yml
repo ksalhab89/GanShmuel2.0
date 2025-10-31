@@ -36,8 +36,8 @@ services:
       MYSQL_DATABASE: ${BILLING_DB_NAME}
       MYSQL_USER: ${BILLING_DB_USER}
       MYSQL_PASSWORD: ${BILLING_DB_PASSWORD}
-    # ports:  # SECURITY: Port removed - access via Docker network only
-    #   - "3307:3306"
+    ports:  # TEMP: Expose for local testing (matches GitHub Actions setup)
+      - "3307:3306"
     volumes:
       - billing_db_data:/var/lib/mysql
       - ./billing-service/billingdb.sql:/docker-entrypoint-initdb.d/init.sql
