@@ -121,37 +121,35 @@ This document tracks all known technical debt in the Gan Shmuel project. All ite
 ## 3. Tooling Inconsistency
 
 ### 3.1 Billing Service - Flake8/Black/isort vs Ruff
-**Priority**: 🟢 LOW
+**Priority**: ✅ **COMPLETED**
 **Effort**: 2-3 hours
 **Impact**: Developer experience, CI/CD speed (10-100x faster with Ruff)
 
-**Current State**:
-- **Weight Service**: Ruff (modern, fast)
-- **Shift Service**: Ruff (modern, fast)
-- **Provider Registration Service**: Ruff (modern, fast)
-- **Billing Service**: flake8 + black + isort (traditional, slow)
+**Status**: ✅ **MIGRATION COMPLETE**
 
-**Why Inconsistent**: Billing service created earlier with traditional toolchain
-
-**Migration Path**:
-1. Add ruff to billing-service dev dependencies
-2. Run `ruff check src tests` to see differences
-3. Configure `pyproject.toml` to match other services
-4. Update CI/CD workflow (`.github/workflows/test.yml`)
-5. Remove flake8, black, isort from:
+**What Was Done**:
+1. ✅ Added Ruff to billing-service dev dependencies
+2. ✅ Configured `[tool.ruff]` in `pyproject.toml` (line-length=88, target-version="py311")
+3. ✅ Verified Ruff works: `uv run ruff check src tests` - All checks passed!
+4. ✅ Updated pre-commit hooks to use Ruff for billing-service
+5. ✅ Updated CI/CD workflow (`.github/workflows/test.yml`) - replaced flake8/black/isort with Ruff
+6. ✅ Removed flake8, black, isort from:
    - `pyproject.toml` dependencies
-   - `.pre-commit-config.yaml` hooks (lines 39-69)
-   - CI/CD workflow
+   - `.pre-commit-config.yaml` hooks
+7. ✅ Tests pass: 307 passed, 25 skipped, 87% coverage
 
-**Benefits**:
-- 10-100x faster linting/formatting
-- Single tool instead of 3
-- Consistency across all services
-- Simpler pre-commit hooks
+**Current State** (ALL SERVICES NOW CONSISTENT):
+- **Weight Service**: ✅ Ruff (modern, fast)
+- **Shift Service**: ✅ Ruff (modern, fast)
+- **Provider Registration Service**: ✅ Ruff (modern, fast)
+- **Billing Service**: ✅ Ruff (modern, fast) ← **MIGRATED**
 
-**References**:
-- `billing-service/pyproject.toml:24-28` - TODO comment
-- `.pre-commit-config.yaml:39, 52, 62` - TODO comments for hook removal
+**Benefits Achieved**:
+- ✅ 10-100x faster linting/formatting
+- ✅ Single tool instead of 3
+- ✅ Consistency across all services
+- ✅ Simpler pre-commit hooks (removed 44 lines)
+- ✅ Faster CI/CD pipeline
 
 ---
 
