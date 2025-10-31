@@ -21,6 +21,9 @@ dev = [
     "pytest>=7.4.0",
     "pytest-asyncio>=0.21.0",
     "pytest-cov>=4.1.0",
+    # TODO: TECH DEBT - Migrate from flake8+black+isort to Ruff for consistency
+    # with weight-service, shift-service, and provider-registration-service.
+    # Ruff is 10-100x faster and replaces all 3 tools. Low priority.
     "black>=23.0.0",
     "isort>=5.12.0",
     "flake8>=6.0.0",

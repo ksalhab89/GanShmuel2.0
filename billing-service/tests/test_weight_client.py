@@ -518,8 +518,7 @@ class TestWeightServiceClientEdgeCases:
             with patch("asyncio.sleep", AsyncMock()):
                 with pytest.raises(WeightServiceError):
                     await client.get_transactions(
-                        from_date="20250101000000",
-                        to_date="20251231235959"
+                        from_date="20250101000000", to_date="20251231235959"
                     )
 
     @pytest.mark.asyncio
@@ -547,10 +546,11 @@ class TestWeightServiceClientEdgeCases:
 
         with patch("httpx.AsyncClient", return_value=mock_client):
             with patch("asyncio.sleep", AsyncMock()) as mock_sleep:
-                with pytest.raises(WeightServiceError, match="unavailable after 2 attempts"):
+                with pytest.raises(
+                    WeightServiceError, match="unavailable after 2 attempts"
+                ):
                     await client.get_transactions(
-                        from_date="20250101000000",
-                        to_date="20251231235959"
+                        from_date="20250101000000", to_date="20251231235959"
                     )
 
                 # Verify exponential backoff was called
@@ -581,13 +581,13 @@ class TestWeightServiceClientEdgeCases:
 
         with patch("httpx.AsyncClient", return_value=mock_client):
             with patch("asyncio.sleep", AsyncMock()) as mock_sleep:
-                with pytest.raises(WeightServiceError, match="unavailable after 2 attempts"):
+                with pytest.raises(
+                    WeightServiceError, match="unavailable after 2 attempts"
+                ):
                     await client.get_transactions(
-                        from_date="20250101000000",
-                        to_date="20251231235959"
+                        from_date="20250101000000", to_date="20251231235959"
                     )
 
                 # Verify exponential backoff was called
                 assert mock_sleep.call_count == 1
                 assert mock_client.attempts == 2
-

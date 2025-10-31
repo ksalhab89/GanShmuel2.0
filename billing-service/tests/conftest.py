@@ -73,6 +73,7 @@ def setup_database():
     except Exception as e:
         # If DB not available, tests will skip gracefully
         import logging
+
         logging.warning(f"Database setup failed (OK for unit tests): {e}")
 
     yield
