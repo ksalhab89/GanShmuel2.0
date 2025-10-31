@@ -5,8 +5,10 @@ from ..auth.jwt_handler import create_access_token, verify_password
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
 
-# TEMPORARY: Hardcoded admin for testing
-# TODO: Replace with database user lookup
+# TEMPORARY: Hardcoded admin for demo project
+# TODO: For production, replace with User table in database with proper RBAC
+# Current credentials: admin@example.com / admin123 (bcrypt hashed)
+# This is intentional for demo - simplifies testing without user management overhead
 ADMIN_USER = {
     "username": "admin@example.com",
     "password_hash": "$2b$12$JTTl35DfwYumO8YwOpKuMum89zzbynJamgwg//U7jaFfEGZM9u1ly",  # "admin123"

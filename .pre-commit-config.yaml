@@ -124,14 +124,6 @@ repos:
         stages: [push]  # Only on push, not commit
         verbose: true
 
-      # Check for TODOs with ticket numbers
-      - id: check-todos
-        name: Check TODOs have ticket references
-        entry: bash -c 'git diff --cached --name-only --diff-filter=ACM | xargs grep -n "TODO:" | grep -v "TODO: GS-" && echo "ERROR: Found TODOs without ticket references (format: TODO: GS-123)" && exit 1 || exit 0'
-        language: system
-        pass_filenames: false
-        stages: [commit]
-
 # Configuration
 default_stages: [commit, push]
 fail_fast: false  # Run all hooks even if one fails

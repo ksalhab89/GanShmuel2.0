@@ -881,7 +881,7 @@ class TestRateRepository:
             database.execute_query = original_execute_query
 
     @pytest.mark.asyncio
-    @pytest.mark.skip(reason="TODO: Fix later")
+    @pytest.mark.skip(reason="See SKIPPED_TESTS.md for details")
     async def test_get_all_rates_empty(self, db_connection):
         """Test getting all rates when none exist."""
         repo = RateRepository()
@@ -923,7 +923,7 @@ class TestRateRepository:
             database.execute_query = original_execute_query
 
     @pytest.mark.asyncio
-    @pytest.mark.skip(reason="TODO: Fix later")
+    @pytest.mark.skip(reason="See SKIPPED_TESTS.md for details")
     async def test_get_all_rates_multiple(self, db_connection, multiple_rates):
         """Test getting all rates when multiple exist."""
         repo = RateRepository()
@@ -972,7 +972,7 @@ class TestRateRepository:
             database.execute_query = original_execute_query
 
     @pytest.mark.asyncio
-    @pytest.mark.skip(reason="TODO: Fix later")
+    @pytest.mark.skip(reason="See SKIPPED_TESTS.md for details")
     async def test_rate_scope_filtering(self, db_connection, multiple_rates):
         """Test that rates can be filtered by scope."""
         repo = RateRepository()

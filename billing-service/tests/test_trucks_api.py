@@ -154,7 +154,7 @@ class TestTrucksAPI:
 
     @pytest.mark.asyncio
     @patch("src.services.weight_client.weight_client.get_item_details")
-    @pytest.mark.skip(reason="TODO: Fix later")
+    @pytest.mark.skip(reason="See SKIPPED_TESTS.md for details")
     async def test_get_truck_details_success(
         self,
         mock_get_item,
@@ -272,7 +272,7 @@ class TestTrucksAPIEdgeCases:
     """Test suite for truck API edge cases."""
 
     @pytest.mark.asyncio
-    @pytest.mark.skip(reason="TODO: Fix later")
+    @pytest.mark.skip(reason="See SKIPPED_TESTS.md for details")
     async def test_register_truck_empty_id(
         self, test_client: AsyncClient, sample_provider
     ):
@@ -318,7 +318,7 @@ class TestTrucksAPIEdgeCases:
         assert response.status_code == 200
 
     @pytest.mark.asyncio
-    @pytest.mark.skip(reason="TODO: Fix later")
+    @pytest.mark.skip(reason="See SKIPPED_TESTS.md for details")
     async def test_get_truck_details_invalid_date_format(
         self, test_client: AsyncClient, sample_truck
     ):

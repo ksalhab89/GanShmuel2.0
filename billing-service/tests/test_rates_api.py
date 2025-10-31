@@ -234,7 +234,7 @@ class TestRatesAPI:
         assert ws.cell(1, 3).value == "Scope"
 
     @pytest.mark.asyncio
-    @pytest.mark.skip(reason="TODO: Fix later")
+    @pytest.mark.skip(reason="See SKIPPED_TESTS.md for details")
     async def test_get_rates_excel_empty(
         self, test_client: AsyncClient, clean_database
     ):

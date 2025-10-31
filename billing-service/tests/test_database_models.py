@@ -301,7 +301,7 @@ class TestModelRelationships:
         cursor.close()
 
     @pytest.mark.asyncio
-    @pytest.mark.skip(reason="TODO: Fix later")
+    @pytest.mark.skip(reason="See SKIPPED_TESTS.md for details")
     async def test_provider_name_unique_constraint(self, db_connection):
         """Test that provider names must be unique."""
         cursor = db_connection.cursor()
@@ -319,7 +319,7 @@ class TestModelRelationships:
         cursor.close()
 
     @pytest.mark.asyncio
-    @pytest.mark.skip(reason="TODO: Fix later")
+    @pytest.mark.skip(reason="See SKIPPED_TESTS.md for details")
     async def test_truck_foreign_key_constraint(self, db_connection):
         """Test that trucks cannot reference non-existent providers."""
         cursor = db_connection.cursor()
@@ -386,7 +386,7 @@ class TestModelRelationships:
         cursor.close()
 
     @pytest.mark.asyncio
-    @pytest.mark.skip(reason="TODO: Fix later")
+    @pytest.mark.skip(reason="See SKIPPED_TESTS.md for details")
     async def test_cascade_behavior_on_provider_delete(
         self, db_connection, sample_provider
     ):

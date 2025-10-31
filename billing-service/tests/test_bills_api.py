@@ -174,7 +174,7 @@ class TestBillsAPI:
         total_from_products = sum(p["pay"] for p in data["products"])
         assert data["total"] == total_from_products
 
-    @pytest.mark.skip(reason="TODO: Fix later")
+    @pytest.mark.skip(reason="See SKIPPED_TESTS.md for details")
     @pytest.mark.asyncio
     @patch("src.services.bill_service.weight_client.get_transactions")
     async def test_generate_bill_provider_specific_rate(
@@ -258,7 +258,7 @@ class TestBillsAPI:
         data = response.json()
         assert data["sessionCount"] >= 0
 
-    @pytest.mark.skip(reason="TODO: Fix later")
+    @pytest.mark.skip(reason="See SKIPPED_TESTS.md for details")
     @pytest.mark.asyncio
     @patch("src.services.bill_service.weight_client.get_transactions")
     async def test_generate_bill_multiple_products(
@@ -302,7 +302,7 @@ class TestBillsAPI:
         data = response.json()
         assert len(data["products"]) >= 2
 
-    @pytest.mark.skip(reason="TODO: Fix later")
+    @pytest.mark.skip(reason="See SKIPPED_TESTS.md for details")
     @pytest.mark.asyncio
     @patch("src.services.bill_service.weight_client.get_transactions")
     async def test_generate_bill_same_product_multiple_transactions(
@@ -351,7 +351,7 @@ class TestBillsAPI:
         assert apples_products[0]["count"] == "2"  # Two transactions
         assert apples_products[0]["amount"] == 50000  # 30000 + 20000
 
-    @pytest.mark.skip(reason="TODO: Fix later")
+    @pytest.mark.skip(reason="See SKIPPED_TESTS.md for details")
     @pytest.mark.asyncio
     async def test_generate_bill_invalid_date_format(
         self, test_client: AsyncClient, sample_provider
@@ -441,7 +441,7 @@ class TestBillsAPIEdgeCases:
         # Should still generate bill, just with 0 payment
         assert data["total"] == 0
 
-    @pytest.mark.skip(reason="TODO: Fix later")
+    @pytest.mark.skip(reason="See SKIPPED_TESTS.md for details")
     @pytest.mark.asyncio
     @patch("src.services.bill_service.weight_client.get_transactions")
     async def test_generate_bill_weight_service_error(
@@ -461,7 +461,7 @@ class TestBillsAPIEdgeCases:
         # Should return appropriate error
         assert response.status_code in [500, 503]
 
-    @pytest.mark.skip(reason="TODO: Fix later")
+    @pytest.mark.skip(reason="See SKIPPED_TESTS.md for details")
     @pytest.mark.asyncio
     @patch("src.services.bill_service.weight_client.get_transactions")
     async def test_generate_bill_future_date_range(

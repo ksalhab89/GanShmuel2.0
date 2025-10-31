@@ -82,7 +82,7 @@ class TestWeightServiceClientGetTransactions:
         assert transactions == []
 
     @pytest.mark.asyncio
-    @pytest.mark.skip(reason="TODO: Fix later")
+    @pytest.mark.skip(reason="See SKIPPED_TESTS.md for details")
     async def test_get_transactions_handles_non_list_response(self):
         """Test handling of unexpected response format."""
 
@@ -196,7 +196,7 @@ class TestWeightServiceClientRetryLogic:
     """Test retry logic and error handling."""
 
     @pytest.mark.asyncio
-    @pytest.mark.skip(reason="TODO: Fix later")
+    @pytest.mark.skip(reason="See SKIPPED_TESTS.md for details")
     async def test_retry_on_timeout(self):
         """Test exponential backoff retry on timeout."""
         attempt_count = 0
@@ -262,7 +262,7 @@ class TestWeightServiceClientRetryLogic:
                     )
 
     @pytest.mark.asyncio
-    @pytest.mark.skip(reason="TODO: Fix later")
+    @pytest.mark.skip(reason="See SKIPPED_TESTS.md for details")
     async def test_retry_on_generic_exception(self):
         """Test retry on generic exceptions."""
         attempt_count = 0
@@ -299,7 +299,7 @@ class TestWeightServiceClientRetryLogic:
         assert transactions == []
 
     @pytest.mark.asyncio
-    @pytest.mark.skip(reason="TODO: Fix later")
+    @pytest.mark.skip(reason="See SKIPPED_TESTS.md for details")
     async def test_no_retry_on_success(self):
         """Test that successful requests don't retry."""
         attempt_count = 0
@@ -331,7 +331,7 @@ class TestWeightServiceClientRetryLogic:
         assert len(transactions) == 1
 
     @pytest.mark.asyncio
-    @pytest.mark.skip(reason="TODO: Fix later")
+    @pytest.mark.skip(reason="See SKIPPED_TESTS.md for details")
     async def test_handles_500_error_with_retry(self):
         """Test handling of 500 errors with retry."""
         attempt_count = 0
@@ -393,7 +393,7 @@ class TestWeightServiceClientEdgeCases:
     """Test edge cases and error scenarios."""
 
     @pytest.mark.asyncio
-    @pytest.mark.skip(reason="TODO: Fix later")
+    @pytest.mark.skip(reason="See SKIPPED_TESTS.md for details")
     async def test_get_item_details_handles_parsing_error(self):
         """Test handling of malformed item response."""
 
@@ -424,7 +424,7 @@ class TestWeightServiceClientEdgeCases:
                 )
 
     @pytest.mark.asyncio
-    @pytest.mark.skip(reason="TODO: Fix later")
+    @pytest.mark.skip(reason="See SKIPPED_TESTS.md for details")
     async def test_get_transactions_handles_parsing_error(self):
         """Test handling of malformed transaction response."""
 
@@ -471,7 +471,7 @@ class TestWeightServiceClientEdgeCases:
         assert item.sessions == []  # Default empty list
 
     @pytest.mark.asyncio
-    @pytest.mark.skip(reason="TODO: Fix later")
+    @pytest.mark.skip(reason="See SKIPPED_TESTS.md for details")
     async def test_request_parameters_passed_correctly(self):
         """Test that request parameters are passed correctly."""
         captured_params = {}

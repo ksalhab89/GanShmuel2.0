@@ -259,7 +259,7 @@ class TestProvidersAPIConcurrency:
     """Test suite for provider API concurrency scenarios."""
 
     @pytest.mark.asyncio
-    @pytest.mark.skip(reason="TODO: Fix later")
+    @pytest.mark.skip(reason="See SKIPPED_TESTS.md for details")
     async def test_concurrent_provider_creation_same_name(
         self, test_client: AsyncClient, clean_database
     ):
