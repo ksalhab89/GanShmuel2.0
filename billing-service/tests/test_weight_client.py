@@ -114,30 +114,17 @@ class TestWeightServiceClientGetItemDetails:
     """Test weight service client item details fetching."""
 
     @pytest.mark.asyncio
-    @pytest.mark.skip(reason="TODO: Fix later")
-    async def test_get_item_details_success(self):
+    async def test_get_item_details_success(self, mock_httpx_client):
         """Test successful item details retrieval."""
-
-        class MockAsyncClient:
-            async def __aenter__(self):
-                return self
-
-            async def __aexit__(self, *args):
-                pass
-
-            async def request(self, method, url, **kwargs):
-                mock_response = MagicMock()
-                mock_response.status_code = 200
-                mock_response.json.return_value = {
-                    "id": "ABC123",
-                    "tara": 10000,
-                    "sessions": ["sess1", "sess2"],
-                }
-                return mock_response
+        mock_httpx_client.set_response(
+            "/item/ABC123",
+            {"id": "ABC123", "tara": 10000, "sessions": ["sess1", "sess2"]},
+            200,
+        )
 
         client = WeightServiceClient()
 
-        with patch("httpx.AsyncClient", MockAsyncClient):
+        with patch("httpx.AsyncClient", return_value=mock_httpx_client):
             item = await client.get_item_details(
                 item_id="ABC123", from_date="20250101000000", to_date="20251231235959"
             )
@@ -149,30 +136,17 @@ class TestWeightServiceClientGetItemDetails:
         assert item.sessions == ["sess1", "sess2"]
 
     @pytest.mark.asyncio
-    @pytest.mark.skip(reason="TODO: Fix later")
-    async def test_get_item_details_with_na_tara(self):
+    async def test_get_item_details_with_na_tara(self, mock_httpx_client):
         """Test item details with tara='na'."""
-
-        class MockAsyncClient:
-            async def __aenter__(self):
-                return self
-
-            async def __aexit__(self, *args):
-                pass
-
-            async def request(self, method, url, **kwargs):
-                mock_response = MagicMock()
-                mock_response.status_code = 200
-                mock_response.json.return_value = {
-                    "id": "CONTAINER001",
-                    "tara": "na",
-                    "sessions": [],
-                }
-                return mock_response
+        mock_httpx_client.set_response(
+            "/item/CONTAINER001",
+            {"id": "CONTAINER001", "tara": "na", "sessions": []},
+            200,
+        )
 
         client = WeightServiceClient()
 
-        with patch("httpx.AsyncClient", MockAsyncClient):
+        with patch("httpx.AsyncClient", return_value=mock_httpx_client):
             item = await client.get_item_details(
                 item_id="CONTAINER001",
                 from_date="20250101000000",
@@ -183,25 +157,13 @@ class TestWeightServiceClientGetItemDetails:
         assert item.tara == "na"
 
     @pytest.mark.asyncio
-    @pytest.mark.skip(reason="TODO: Fix later")
-    async def test_get_item_details_404_returns_none(self):
+    async def test_get_item_details_404_returns_none(self, mock_httpx_client):
         """Test that 404 response returns None."""
-
-        class MockAsyncClient:
-            async def __aenter__(self):
-                return self
-
-            async def __aexit__(self, *args):
-                pass
-
-            async def request(self, method, url, **kwargs):
-                mock_response = MagicMock()
-                mock_response.status_code = 404
-                return mock_response
+        mock_httpx_client.set_response("/item/NONEXISTENT", {}, 404)
 
         client = WeightServiceClient()
 
-        with patch("httpx.AsyncClient", MockAsyncClient):
+        with patch("httpx.AsyncClient", return_value=mock_httpx_client):
             item = await client.get_item_details(
                 item_id="NONEXISTENT",
                 from_date="20250101000000",
@@ -211,30 +173,17 @@ class TestWeightServiceClientGetItemDetails:
         assert item is None
 
     @pytest.mark.asyncio
-    @pytest.mark.skip(reason="TODO: Fix later")
-    async def test_get_item_details_empty_sessions(self):
+    async def test_get_item_details_empty_sessions(self, mock_httpx_client):
         """Test item details with empty sessions list."""
-
-        class MockAsyncClient:
-            async def __aenter__(self):
-                return self
-
-            async def __aexit__(self, *args):
-                pass
-
-            async def request(self, method, url, **kwargs):
-                mock_response = MagicMock()
-                mock_response.status_code = 200
-                mock_response.json.return_value = {
-                    "id": "NEWTRUCK",
-                    "tara": 12000,
-                    "sessions": [],
-                }
-                return mock_response
+        mock_httpx_client.set_response(
+            "/item/NEWTRUCK",
+            {"id": "NEWTRUCK", "tara": 12000, "sessions": []},
+            200,
+        )
 
         client = WeightServiceClient()
 
-        with patch("httpx.AsyncClient", MockAsyncClient):
+        with patch("httpx.AsyncClient", return_value=mock_httpx_client):
             item = await client.get_item_details(
                 item_id="NEWTRUCK", from_date="20250101000000", to_date="20251231235959"
             )
@@ -503,27 +452,16 @@ class TestWeightServiceClientEdgeCases:
                 )
 
     @pytest.mark.asyncio
-    @pytest.mark.skip(reason="TODO: Fix later")
-    async def test_get_item_details_missing_fields(self):
+    async def test_get_item_details_missing_fields(self, mock_httpx_client):
         """Test handling of response with missing fields."""
-
-        class MockAsyncClient:
-            async def __aenter__(self):
-                return self
-
-            async def __aexit__(self, *args):
-                pass
-
-            async def request(self, method, url, **kwargs):
-                mock_response = MagicMock()
-                mock_response.status_code = 200
-                # Missing 'sessions' field
-                mock_response.json.return_value = {"id": "ABC123", "tara": 10000}
-                return mock_response
+        # Missing 'sessions' field
+        mock_httpx_client.set_response(
+            "/item/ABC123", {"id": "ABC123", "tara": 10000}, 200
+        )
 
         client = WeightServiceClient()
 
-        with patch("httpx.AsyncClient", MockAsyncClient):
+        with patch("httpx.AsyncClient", return_value=mock_httpx_client):
             item = await client.get_item_details(
                 item_id="ABC123", from_date="20250101000000", to_date="20251231235959"
             )
@@ -566,3 +504,90 @@ class TestWeightServiceClientEdgeCases:
         assert captured_params.get("from") == "20250101120000"
         assert captured_params.get("to") == "20250131235959"
         assert captured_params.get("filter") == "out,in"
+
+    @pytest.mark.asyncio
+    async def test_non_200_404_status_continues_retry(self, mock_httpx_client):
+        """Test that non-200/404 status codes log warning and retry."""
+        # Return 500 status - should log warning and exhaust retries
+        mock_httpx_client.set_response("/weight", None, 500)
+
+        client = WeightServiceClient()
+        client.max_retries = 2
+
+        with patch("httpx.AsyncClient", return_value=mock_httpx_client):
+            with patch("asyncio.sleep", AsyncMock()):
+                with pytest.raises(WeightServiceError):
+                    await client.get_transactions(
+                        from_date="20250101000000",
+                        to_date="20251231235959"
+                    )
+
+    @pytest.mark.asyncio
+    async def test_timeout_exception_retries_with_backoff(self):
+        """Test timeout exception triggers retry with exponential backoff."""
+        import httpx
+
+        class MockAsyncClientTimeout:
+            def __init__(self):
+                self.attempts = 0
+
+            async def __aenter__(self):
+                return self
+
+            async def __aexit__(self, *args):
+                pass
+
+            async def request(self, method, url, **kwargs):
+                self.attempts += 1
+                raise httpx.TimeoutException("Timeout")
+
+        client = WeightServiceClient()
+        client.max_retries = 2
+        mock_client = MockAsyncClientTimeout()
+
+        with patch("httpx.AsyncClient", return_value=mock_client):
+            with patch("asyncio.sleep", AsyncMock()) as mock_sleep:
+                with pytest.raises(WeightServiceError, match="unavailable after 2 attempts"):
+                    await client.get_transactions(
+                        from_date="20250101000000",
+                        to_date="20251231235959"
+                    )
+
+                # Verify exponential backoff was called
+                assert mock_sleep.call_count == 1  # Called once between retries
+                assert mock_client.attempts == 2
+
+    @pytest.mark.asyncio
+    async def test_generic_exception_retries_with_backoff(self):
+        """Test generic exception triggers retry with exponential backoff."""
+
+        class MockAsyncClientException:
+            def __init__(self):
+                self.attempts = 0
+
+            async def __aenter__(self):
+                return self
+
+            async def __aexit__(self, *args):
+                pass
+
+            async def request(self, method, url, **kwargs):
+                self.attempts += 1
+                raise Exception("Connection error")
+
+        client = WeightServiceClient()
+        client.max_retries = 2
+        mock_client = MockAsyncClientException()
+
+        with patch("httpx.AsyncClient", return_value=mock_client):
+            with patch("asyncio.sleep", AsyncMock()) as mock_sleep:
+                with pytest.raises(WeightServiceError, match="unavailable after 2 attempts"):
+                    await client.get_transactions(
+                        from_date="20250101000000",
+                        to_date="20251231235959"
+                    )
+
+                # Verify exponential backoff was called
+                assert mock_sleep.call_count == 1
+                assert mock_client.attempts == 2
+
